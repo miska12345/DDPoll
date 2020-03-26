@@ -24,7 +24,7 @@ func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithBlock())
-	conn, err := grpc.Dial("localhost:8081", opts...)
+	conn, err := grpc.Dial("localhost:8080", opts...)
 	if err != nil {
 		fmt.Println(err)
 		return
