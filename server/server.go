@@ -7,6 +7,7 @@ import (
 	"net"
 
 	pb "github.com/miska12345/DDPoll/ddpoll"
+	models "github.com/miska12345/DDPoll/models"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -120,4 +121,49 @@ func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPo
 // Maximum number of polls returned is set by models.SEARCH_MAX_RESULT
 func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.SearchResp, error) {
 	panic("not implemented")
+}
+
+/*********************************************************************************************************************************************************/
+
+// Create Poll
+func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, id int64, err error) {
+	if len(params) < 2 {
+		return nil, -1, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+	}
+	username := params[0]
+	password := params[1]
+	// TODO: Do username format check(i.e. not empty, contains no special character etc)
+
+	// Call our internal authentication routine
+	err = s.authenticate(username, password)
+	if err != nil {
+		return
+	}
+
+	// Associate current context with the particular user
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		logger.Errorf("metadata from context failed, action aborted")
+		return nil, -1, status.Error(codes.Internal, "Internal error")
+	}
+	md["username"] = make([]string, 1)
+	md["username"][0] = params[0]
+
+	return &pb.ActionSummary{
+		Status: pb.Status_OK,
+	}, 0, nil
+}
+
+func createPoll(host string, members []string, title, content string, accessbility int8, choices []string) *models.Poll {
+	p := new(models.Poll)
+
+	// Initialize poll struct
+	p.HOST = host
+	p.MEMBERS = members
+	p.TITLE = title
+	p.CONTENT = content
+	p.ACCESSIBLITY = accessbility
+	p.CHOICES = choices
+	p.COUNTS = make([]int64, len(choices))
+	return p
 }
