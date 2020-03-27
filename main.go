@@ -9,10 +9,13 @@ import (
 	"google.golang.org/grpc"
 )
 
-func authenticate(client pb.DDPollClient, query *pb.AuthQuery) {
+func authenticate(client pb.DDPollClient, username, password string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := client.Authenticate(ctx, query)
+	_, err := client.DoAction(ctx, &pb.UserAction{
+		Action:     pb.UserAction_Authenticate,
+		Parameters: []string{username, password},
+	})
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,9 +34,5 @@ func main() {
 	}
 	defer conn.Close()
 	client := pb.NewDDPollClient(conn)
-	authenticate(client, &pb.AuthQuery{
-		Name:     "admin",
-		Password: "666",
-	})
-
+	authenticate(client, "admin", "666")
 }

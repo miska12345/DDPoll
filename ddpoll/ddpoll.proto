@@ -2,51 +2,67 @@ syntax = "proto3";
 package ddpoll;
 
 service DDPoll {
-    rpc Authenticate(AuthQuery) returns (AuthResp) {}
     rpc EstablishPollStream(PollStreamConfig) returns (stream Poll) {}
     rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
+    rpc DoAction(UserAction) returns (ActionSummary) {}
 }
 
-message AuthQuery {
-    string name = 1;
-    string password = 2;
-}
-
-message AuthResp {
-    int32 status = 1;
+enum Status {
+    OK = 0;
+    Error = 1;
 }
 
 message PollStreamConfig {
-    bool showVoted = 1;
     enum RankBy {
         Time = 0;
         Participation = 1;
         Stars = 2;
     }
-    RankBy rankBy = 2;
+    RankBy rankBy = 1;
 }
 
 message Poll {
-    int32 id = 1;
+    uint32 id = 1;
     string owner = 2;
     string category = 3;
+    string body = 4;
     enum DisplayType {
         OnVote = 0;
         OnReveal = 1;
     }
-    DisplayType displayType = 4;
-    repeated string tags = 5;
-    repeated string options = 6;
+    DisplayType displayType = 5;
+    repeated string tags = 6;
+    repeated string options = 7;
+    bytes attachment = 8;
 }
 
 message SearchQuery {
-    int32 pollID = 1;
+    uint32 pollID = 1;
     string keywords = 2;
     string tags = 3;
-    int32 numResultsMax = 4;
+    uint32 numResultsMax = 4;
 }
 
 message SearchResp {
-    int32 numResultsActual = 1;
+    uint32 numResultsActual = 1;
     repeated Poll polls = 2;
+}
+
+message UserAction {
+    uint32 resourceID = 1;  // The object that this action manipulates
+    enum Action {
+        Unknown = 0;
+        Authenticate = 1;
+        VoteOne = 2;
+        VoteMultiple = 3;
+        Star = 4;
+        Reveal = 5;
+        Create = 6;
+    }
+    Action action = 2;
+    repeated string parameters = 3; // Array of parameters
+}
+
+message ActionSummary {
+    Status status = 1;
 }

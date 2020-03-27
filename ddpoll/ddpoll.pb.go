@@ -24,6 +24,31 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type Status int32
+
+const (
+	Status_OK    Status = 0
+	Status_Error Status = 1
+)
+
+var Status_name = map[int32]string{
+	0: "OK",
+	1: "Error",
+}
+
+var Status_value = map[string]int32{
+	"OK":    0,
+	"Error": 1,
+}
+
+func (x Status) String() string {
+	return proto.EnumName(Status_name, int32(x))
+}
+
+func (Status) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_907ccde7d6668e21, []int{0}
+}
+
 type PollStreamConfig_RankBy int32
 
 const (
@@ -49,7 +74,7 @@ func (x PollStreamConfig_RankBy) String() string {
 }
 
 func (PollStreamConfig_RankBy) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{2, 0}
+	return fileDescriptor_907ccde7d6668e21, []int{0, 0}
 }
 
 type Poll_DisplayType int32
@@ -74,98 +99,51 @@ func (x Poll_DisplayType) String() string {
 }
 
 func (Poll_DisplayType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{3, 0}
+	return fileDescriptor_907ccde7d6668e21, []int{1, 0}
 }
 
-type AuthQuery struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Password             string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type UserAction_Action int32
+
+const (
+	UserAction_Unknown      UserAction_Action = 0
+	UserAction_Authenticate UserAction_Action = 1
+	UserAction_VoteOne      UserAction_Action = 2
+	UserAction_VoteMultiple UserAction_Action = 3
+	UserAction_Star         UserAction_Action = 4
+	UserAction_Reveal       UserAction_Action = 5
+	UserAction_Create       UserAction_Action = 6
+)
+
+var UserAction_Action_name = map[int32]string{
+	0: "Unknown",
+	1: "Authenticate",
+	2: "VoteOne",
+	3: "VoteMultiple",
+	4: "Star",
+	5: "Reveal",
+	6: "Create",
 }
 
-func (m *AuthQuery) Reset()         { *m = AuthQuery{} }
-func (m *AuthQuery) String() string { return proto.CompactTextString(m) }
-func (*AuthQuery) ProtoMessage()    {}
-func (*AuthQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{0}
+var UserAction_Action_value = map[string]int32{
+	"Unknown":      0,
+	"Authenticate": 1,
+	"VoteOne":      2,
+	"VoteMultiple": 3,
+	"Star":         4,
+	"Reveal":       5,
+	"Create":       6,
 }
 
-func (m *AuthQuery) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AuthQuery.Unmarshal(m, b)
-}
-func (m *AuthQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AuthQuery.Marshal(b, m, deterministic)
-}
-func (m *AuthQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AuthQuery.Merge(m, src)
-}
-func (m *AuthQuery) XXX_Size() int {
-	return xxx_messageInfo_AuthQuery.Size(m)
-}
-func (m *AuthQuery) XXX_DiscardUnknown() {
-	xxx_messageInfo_AuthQuery.DiscardUnknown(m)
+func (x UserAction_Action) String() string {
+	return proto.EnumName(UserAction_Action_name, int32(x))
 }
 
-var xxx_messageInfo_AuthQuery proto.InternalMessageInfo
-
-func (m *AuthQuery) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *AuthQuery) GetPassword() string {
-	if m != nil {
-		return m.Password
-	}
-	return ""
-}
-
-type AuthResp struct {
-	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AuthResp) Reset()         { *m = AuthResp{} }
-func (m *AuthResp) String() string { return proto.CompactTextString(m) }
-func (*AuthResp) ProtoMessage()    {}
-func (*AuthResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{1}
-}
-
-func (m *AuthResp) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AuthResp.Unmarshal(m, b)
-}
-func (m *AuthResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AuthResp.Marshal(b, m, deterministic)
-}
-func (m *AuthResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AuthResp.Merge(m, src)
-}
-func (m *AuthResp) XXX_Size() int {
-	return xxx_messageInfo_AuthResp.Size(m)
-}
-func (m *AuthResp) XXX_DiscardUnknown() {
-	xxx_messageInfo_AuthResp.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AuthResp proto.InternalMessageInfo
-
-func (m *AuthResp) GetStatus() int32 {
-	if m != nil {
-		return m.Status
-	}
-	return 0
+func (UserAction_Action) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_907ccde7d6668e21, []int{4, 0}
 }
 
 type PollStreamConfig struct {
-	ShowVoted            bool                    `protobuf:"varint,1,opt,name=showVoted,proto3" json:"showVoted,omitempty"`
-	RankBy               PollStreamConfig_RankBy `protobuf:"varint,2,opt,name=rankBy,proto3,enum=ddpoll.PollStreamConfig_RankBy" json:"rankBy,omitempty"`
+	RankBy               PollStreamConfig_RankBy `protobuf:"varint,1,opt,name=rankBy,proto3,enum=ddpoll.PollStreamConfig_RankBy" json:"rankBy,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
 	XXX_sizecache        int32                   `json:"-"`
@@ -175,7 +153,7 @@ func (m *PollStreamConfig) Reset()         { *m = PollStreamConfig{} }
 func (m *PollStreamConfig) String() string { return proto.CompactTextString(m) }
 func (*PollStreamConfig) ProtoMessage()    {}
 func (*PollStreamConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{2}
+	return fileDescriptor_907ccde7d6668e21, []int{0}
 }
 
 func (m *PollStreamConfig) XXX_Unmarshal(b []byte) error {
@@ -196,13 +174,6 @@ func (m *PollStreamConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PollStreamConfig proto.InternalMessageInfo
 
-func (m *PollStreamConfig) GetShowVoted() bool {
-	if m != nil {
-		return m.ShowVoted
-	}
-	return false
-}
-
 func (m *PollStreamConfig) GetRankBy() PollStreamConfig_RankBy {
 	if m != nil {
 		return m.RankBy
@@ -211,12 +182,14 @@ func (m *PollStreamConfig) GetRankBy() PollStreamConfig_RankBy {
 }
 
 type Poll struct {
-	Id                   int32            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id                   uint32           `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Owner                string           `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
 	Category             string           `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
-	DisplayType          Poll_DisplayType `protobuf:"varint,4,opt,name=displayType,proto3,enum=ddpoll.Poll_DisplayType" json:"displayType,omitempty"`
-	Tags                 []string         `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	Options              []string         `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
+	Body                 string           `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	DisplayType          Poll_DisplayType `protobuf:"varint,5,opt,name=displayType,proto3,enum=ddpoll.Poll_DisplayType" json:"displayType,omitempty"`
+	Tags                 []string         `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Options              []string         `protobuf:"bytes,7,rep,name=options,proto3" json:"options,omitempty"`
+	Attachment           []byte           `protobuf:"bytes,8,opt,name=attachment,proto3" json:"attachment,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -226,7 +199,7 @@ func (m *Poll) Reset()         { *m = Poll{} }
 func (m *Poll) String() string { return proto.CompactTextString(m) }
 func (*Poll) ProtoMessage()    {}
 func (*Poll) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{3}
+	return fileDescriptor_907ccde7d6668e21, []int{1}
 }
 
 func (m *Poll) XXX_Unmarshal(b []byte) error {
@@ -247,7 +220,7 @@ func (m *Poll) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Poll proto.InternalMessageInfo
 
-func (m *Poll) GetId() int32 {
+func (m *Poll) GetId() uint32 {
 	if m != nil {
 		return m.Id
 	}
@@ -264,6 +237,13 @@ func (m *Poll) GetOwner() string {
 func (m *Poll) GetCategory() string {
 	if m != nil {
 		return m.Category
+	}
+	return ""
+}
+
+func (m *Poll) GetBody() string {
+	if m != nil {
+		return m.Body
 	}
 	return ""
 }
@@ -289,11 +269,18 @@ func (m *Poll) GetOptions() []string {
 	return nil
 }
 
+func (m *Poll) GetAttachment() []byte {
+	if m != nil {
+		return m.Attachment
+	}
+	return nil
+}
+
 type SearchQuery struct {
-	PollID               int32    `protobuf:"varint,1,opt,name=pollID,proto3" json:"pollID,omitempty"`
+	PollID               uint32   `protobuf:"varint,1,opt,name=pollID,proto3" json:"pollID,omitempty"`
 	Keywords             string   `protobuf:"bytes,2,opt,name=keywords,proto3" json:"keywords,omitempty"`
 	Tags                 string   `protobuf:"bytes,3,opt,name=tags,proto3" json:"tags,omitempty"`
-	NumResultsMax        int32    `protobuf:"varint,4,opt,name=numResultsMax,proto3" json:"numResultsMax,omitempty"`
+	NumResultsMax        uint32   `protobuf:"varint,4,opt,name=numResultsMax,proto3" json:"numResultsMax,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -303,7 +290,7 @@ func (m *SearchQuery) Reset()         { *m = SearchQuery{} }
 func (m *SearchQuery) String() string { return proto.CompactTextString(m) }
 func (*SearchQuery) ProtoMessage()    {}
 func (*SearchQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{4}
+	return fileDescriptor_907ccde7d6668e21, []int{2}
 }
 
 func (m *SearchQuery) XXX_Unmarshal(b []byte) error {
@@ -324,7 +311,7 @@ func (m *SearchQuery) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SearchQuery proto.InternalMessageInfo
 
-func (m *SearchQuery) GetPollID() int32 {
+func (m *SearchQuery) GetPollID() uint32 {
 	if m != nil {
 		return m.PollID
 	}
@@ -345,7 +332,7 @@ func (m *SearchQuery) GetTags() string {
 	return ""
 }
 
-func (m *SearchQuery) GetNumResultsMax() int32 {
+func (m *SearchQuery) GetNumResultsMax() uint32 {
 	if m != nil {
 		return m.NumResultsMax
 	}
@@ -353,7 +340,7 @@ func (m *SearchQuery) GetNumResultsMax() int32 {
 }
 
 type SearchResp struct {
-	NumResultsActual     int32    `protobuf:"varint,1,opt,name=numResultsActual,proto3" json:"numResultsActual,omitempty"`
+	NumResultsActual     uint32   `protobuf:"varint,1,opt,name=numResultsActual,proto3" json:"numResultsActual,omitempty"`
 	Polls                []*Poll  `protobuf:"bytes,2,rep,name=polls,proto3" json:"polls,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -364,7 +351,7 @@ func (m *SearchResp) Reset()         { *m = SearchResp{} }
 func (m *SearchResp) String() string { return proto.CompactTextString(m) }
 func (*SearchResp) ProtoMessage()    {}
 func (*SearchResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_907ccde7d6668e21, []int{5}
+	return fileDescriptor_907ccde7d6668e21, []int{3}
 }
 
 func (m *SearchResp) XXX_Unmarshal(b []byte) error {
@@ -385,7 +372,7 @@ func (m *SearchResp) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SearchResp proto.InternalMessageInfo
 
-func (m *SearchResp) GetNumResultsActual() int32 {
+func (m *SearchResp) GetNumResultsActual() uint32 {
 	if m != nil {
 		return m.NumResultsActual
 	}
@@ -399,15 +386,111 @@ func (m *SearchResp) GetPolls() []*Poll {
 	return nil
 }
 
+type UserAction struct {
+	ResourceID           uint32            `protobuf:"varint,1,opt,name=resourceID,proto3" json:"resourceID,omitempty"`
+	Action               UserAction_Action `protobuf:"varint,2,opt,name=action,proto3,enum=ddpoll.UserAction_Action" json:"action,omitempty"`
+	Parameters           []string          `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *UserAction) Reset()         { *m = UserAction{} }
+func (m *UserAction) String() string { return proto.CompactTextString(m) }
+func (*UserAction) ProtoMessage()    {}
+func (*UserAction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_907ccde7d6668e21, []int{4}
+}
+
+func (m *UserAction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UserAction.Unmarshal(m, b)
+}
+func (m *UserAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UserAction.Marshal(b, m, deterministic)
+}
+func (m *UserAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UserAction.Merge(m, src)
+}
+func (m *UserAction) XXX_Size() int {
+	return xxx_messageInfo_UserAction.Size(m)
+}
+func (m *UserAction) XXX_DiscardUnknown() {
+	xxx_messageInfo_UserAction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UserAction proto.InternalMessageInfo
+
+func (m *UserAction) GetResourceID() uint32 {
+	if m != nil {
+		return m.ResourceID
+	}
+	return 0
+}
+
+func (m *UserAction) GetAction() UserAction_Action {
+	if m != nil {
+		return m.Action
+	}
+	return UserAction_Unknown
+}
+
+func (m *UserAction) GetParameters() []string {
+	if m != nil {
+		return m.Parameters
+	}
+	return nil
+}
+
+type ActionSummary struct {
+	Status               Status   `protobuf:"varint,1,opt,name=status,proto3,enum=ddpoll.Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ActionSummary) Reset()         { *m = ActionSummary{} }
+func (m *ActionSummary) String() string { return proto.CompactTextString(m) }
+func (*ActionSummary) ProtoMessage()    {}
+func (*ActionSummary) Descriptor() ([]byte, []int) {
+	return fileDescriptor_907ccde7d6668e21, []int{5}
+}
+
+func (m *ActionSummary) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ActionSummary.Unmarshal(m, b)
+}
+func (m *ActionSummary) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ActionSummary.Marshal(b, m, deterministic)
+}
+func (m *ActionSummary) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ActionSummary.Merge(m, src)
+}
+func (m *ActionSummary) XXX_Size() int {
+	return xxx_messageInfo_ActionSummary.Size(m)
+}
+func (m *ActionSummary) XXX_DiscardUnknown() {
+	xxx_messageInfo_ActionSummary.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ActionSummary proto.InternalMessageInfo
+
+func (m *ActionSummary) GetStatus() Status {
+	if m != nil {
+		return m.Status
+	}
+	return Status_OK
+}
+
 func init() {
+	proto.RegisterEnum("ddpoll.Status", Status_name, Status_value)
 	proto.RegisterEnum("ddpoll.PollStreamConfig_RankBy", PollStreamConfig_RankBy_name, PollStreamConfig_RankBy_value)
 	proto.RegisterEnum("ddpoll.Poll_DisplayType", Poll_DisplayType_name, Poll_DisplayType_value)
-	proto.RegisterType((*AuthQuery)(nil), "ddpoll.AuthQuery")
-	proto.RegisterType((*AuthResp)(nil), "ddpoll.AuthResp")
+	proto.RegisterEnum("ddpoll.UserAction_Action", UserAction_Action_name, UserAction_Action_value)
 	proto.RegisterType((*PollStreamConfig)(nil), "ddpoll.PollStreamConfig")
 	proto.RegisterType((*Poll)(nil), "ddpoll.Poll")
 	proto.RegisterType((*SearchQuery)(nil), "ddpoll.SearchQuery")
 	proto.RegisterType((*SearchResp)(nil), "ddpoll.SearchResp")
+	proto.RegisterType((*UserAction)(nil), "ddpoll.UserAction")
+	proto.RegisterType((*ActionSummary)(nil), "ddpoll.ActionSummary")
 }
 
 func init() {
@@ -415,40 +498,48 @@ func init() {
 }
 
 var fileDescriptor_907ccde7d6668e21 = []byte{
-	// 520 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0xd1, 0x8a, 0xd3, 0x40,
-	0x14, 0x86, 0x9b, 0xb6, 0x89, 0xed, 0x69, 0x77, 0x49, 0xcf, 0xca, 0x12, 0x8a, 0xe0, 0x32, 0x08,
-	0x2e, 0x5e, 0x94, 0xa5, 0x22, 0x82, 0x82, 0xd0, 0xb5, 0x0a, 0x22, 0xb2, 0xeb, 0x74, 0xd1, 0x1b,
-	0x6f, 0x66, 0x9b, 0xb1, 0x1d, 0x36, 0xcd, 0x84, 0x99, 0x89, 0x35, 0xf8, 0x28, 0xbe, 0x8d, 0xaf,
-	0xe1, 0xcb, 0xc8, 0x4c, 0x92, 0x36, 0x55, 0xbc, 0xcb, 0xff, 0xcf, 0xc9, 0xe4, 0x3b, 0xff, 0x39,
-	0x81, 0x61, 0x1c, 0x67, 0x32, 0x49, 0x26, 0x99, 0x92, 0x46, 0x62, 0x50, 0x2a, 0xf2, 0x12, 0xfa,
-	0xb3, 0xdc, 0xac, 0x3f, 0xe6, 0x5c, 0x15, 0x88, 0xd0, 0x4d, 0xd9, 0x86, 0x47, 0xde, 0x99, 0x77,
-	0xde, 0xa7, 0xee, 0x19, 0xc7, 0xd0, 0xcb, 0x98, 0xd6, 0x5b, 0xa9, 0xe2, 0xa8, 0xed, 0xfc, 0x9d,
-	0x26, 0x04, 0x7a, 0xf6, 0x65, 0xca, 0x75, 0x86, 0xa7, 0x10, 0x68, 0xc3, 0x4c, 0xae, 0xdd, 0xdb,
-	0x3e, 0xad, 0x14, 0xf9, 0xe9, 0x41, 0x78, 0x2d, 0x93, 0x64, 0x61, 0x14, 0x67, 0x9b, 0xd7, 0x32,
-	0xfd, 0x2a, 0x56, 0xf8, 0x00, 0xfa, 0x7a, 0x2d, 0xb7, 0x9f, 0xa4, 0xe1, 0xb1, 0xab, 0xef, 0xd1,
-	0xbd, 0x81, 0xcf, 0x21, 0x50, 0x2c, 0xbd, 0xbb, 0x2c, 0xdc, 0x07, 0x8f, 0xa7, 0x0f, 0x27, 0x15,
-	0xfa, 0xdf, 0xf7, 0x4c, 0xa8, 0x2b, 0xa3, 0x55, 0x39, 0xb9, 0x80, 0xa0, 0x74, 0xb0, 0x07, 0xdd,
-	0x1b, 0xb1, 0xe1, 0x61, 0x0b, 0x47, 0x70, 0x74, 0xcd, 0x94, 0x11, 0x4b, 0x91, 0x31, 0x23, 0x64,
-	0x1a, 0x7a, 0xd8, 0x07, 0x7f, 0x61, 0x98, 0xd2, 0x61, 0x9b, 0xfc, 0xf6, 0xa0, 0x6b, 0x6f, 0xc5,
-	0x63, 0x68, 0x8b, 0xb8, 0x42, 0x6f, 0x8b, 0x18, 0xef, 0x83, 0x2f, 0xb7, 0x29, 0x57, 0x55, 0xcf,
-	0xa5, 0xb0, 0x61, 0x2c, 0x99, 0xe1, 0x2b, 0xa9, 0x8a, 0xa8, 0x53, 0x86, 0x51, 0x6b, 0x7c, 0x01,
-	0x83, 0x58, 0xe8, 0x2c, 0x61, 0xc5, 0x4d, 0x91, 0xf1, 0xa8, 0xeb, 0xd0, 0xa3, 0x26, 0xfa, 0x64,
-	0xbe, 0x3f, 0xa7, 0xcd, 0x62, 0x1b, 0xbc, 0x61, 0x2b, 0x1d, 0xf9, 0x67, 0x1d, 0x1b, 0xbc, 0x7d,
-	0xc6, 0x08, 0xee, 0xc9, 0xcc, 0x12, 0xeb, 0x28, 0x70, 0x76, 0x2d, 0xc9, 0x63, 0x18, 0x34, 0x6e,
-	0x42, 0x80, 0xe0, 0x2a, 0xb5, 0xc9, 0x85, 0x2d, 0x1c, 0x42, 0xef, 0x2a, 0xa5, 0xfc, 0x1b, 0x67,
-	0x49, 0xe8, 0x91, 0x1f, 0x30, 0x58, 0x70, 0xa6, 0x96, 0xd5, 0x78, 0x4f, 0x21, 0xb0, 0x2c, 0xef,
-	0xe6, 0xf5, 0x88, 0x4a, 0x65, 0xbb, 0xba, 0xe3, 0x85, 0x9d, 0xa8, 0xae, 0x47, 0x5c, 0xeb, 0x1d,
-	0x59, 0xd9, 0x6d, 0x49, 0xf6, 0x08, 0x8e, 0xd2, 0x7c, 0x43, 0xb9, 0xce, 0x13, 0xa3, 0x3f, 0xb0,
-	0xef, 0xae, 0x57, 0x9f, 0x1e, 0x9a, 0xe4, 0x0b, 0x40, 0xf9, 0x71, 0xb7, 0x1e, 0x4f, 0x20, 0xdc,
-	0x1f, 0xcf, 0x96, 0x26, 0x67, 0x49, 0x45, 0xf1, 0x8f, 0x8f, 0x04, 0x7c, 0x4b, 0x66, 0x61, 0x3a,
-	0xe7, 0x83, 0xe9, 0xb0, 0x99, 0x21, 0x2d, 0x8f, 0xa6, 0xbf, 0x3c, 0x08, 0xe6, 0x73, 0x37, 0xba,
-	0x67, 0x30, 0xb4, 0x5b, 0xc8, 0x53, 0x23, 0xec, 0x30, 0x70, 0x54, 0xd7, 0xef, 0x16, 0x7b, 0x1c,
-	0x36, 0x2d, 0xcb, 0x43, 0x5a, 0x38, 0x83, 0x93, 0x37, 0xda, 0xb0, 0xdb, 0x44, 0xe8, 0xf5, 0x7e,
-	0xb1, 0x30, 0xfa, 0xdf, 0xb2, 0x8d, 0x0f, 0x38, 0x48, 0xeb, 0xc2, 0xc3, 0x57, 0x30, 0x7a, 0x2b,
-	0xd2, 0xd8, 0xea, 0xcb, 0xe2, 0x3d, 0x2f, 0x3e, 0x4b, 0x15, 0xe3, 0x49, 0x5d, 0xd6, 0x88, 0x7e,
-	0x8c, 0x87, 0x66, 0x89, 0x70, 0x1b, 0xb8, 0x7f, 0xf1, 0xe9, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff,
-	0xb4, 0xa3, 0xf6, 0x75, 0x9b, 0x03, 0x00, 0x00,
+	// 654 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x54, 0xdd, 0x6e, 0xd3, 0x4a,
+	0x10, 0x8e, 0xf3, 0xb3, 0x4d, 0x27, 0x3f, 0xda, 0x6e, 0xcf, 0x39, 0xf2, 0xc9, 0x91, 0x0e, 0x91,
+	0x85, 0x20, 0xea, 0x45, 0x54, 0xc2, 0x45, 0x25, 0x2e, 0x90, 0xd2, 0xa6, 0x48, 0xa8, 0xaa, 0x52,
+	0x9c, 0x16, 0x6e, 0xb8, 0xd9, 0xc6, 0x4b, 0x63, 0xd5, 0xde, 0xb5, 0x76, 0xd7, 0x14, 0x0b, 0xf1,
+	0x0c, 0xbc, 0x14, 0x2f, 0xc3, 0x5b, 0xa0, 0xb1, 0x9d, 0xc4, 0xa1, 0xe2, 0x2a, 0xfb, 0x7d, 0x33,
+	0x99, 0x9f, 0x6f, 0x66, 0x0c, 0xdd, 0x20, 0x48, 0x54, 0x14, 0x8d, 0x13, 0xad, 0xac, 0x62, 0xa4,
+	0x40, 0xde, 0x37, 0xa0, 0x57, 0x2a, 0x8a, 0x16, 0x56, 0x0b, 0x1e, 0x9f, 0x29, 0xf9, 0x29, 0xbc,
+	0x63, 0x27, 0x40, 0x34, 0x97, 0xf7, 0xa7, 0x99, 0xeb, 0x0c, 0x9d, 0x51, 0x7f, 0xf2, 0x64, 0x5c,
+	0xfe, 0xf5, 0x77, 0xcf, 0xb1, 0x9f, 0xbb, 0xf9, 0xa5, 0xbb, 0x77, 0x0c, 0xa4, 0x60, 0x58, 0x1b,
+	0x9a, 0xd7, 0x61, 0x2c, 0x68, 0x8d, 0x1d, 0x40, 0xef, 0x8a, 0x6b, 0x1b, 0x2e, 0xc3, 0x84, 0xdb,
+	0x50, 0x49, 0xea, 0xb0, 0x7d, 0x68, 0x2d, 0x2c, 0xd7, 0x86, 0xd6, 0xbd, 0xef, 0x75, 0x68, 0x62,
+	0x54, 0xd6, 0x87, 0x7a, 0x18, 0xe4, 0xf9, 0x7a, 0x7e, 0x3d, 0x0c, 0xd8, 0x5f, 0xd0, 0x52, 0x0f,
+	0x52, 0x68, 0xb7, 0x3e, 0x74, 0x46, 0xfb, 0x7e, 0x01, 0xd8, 0x00, 0xda, 0x4b, 0x6e, 0xc5, 0x9d,
+	0xd2, 0x99, 0xdb, 0xc8, 0x0d, 0x1b, 0xcc, 0x18, 0x34, 0x6f, 0x55, 0x90, 0xb9, 0xcd, 0x9c, 0xcf,
+	0xdf, 0xec, 0x15, 0x74, 0x82, 0xd0, 0x24, 0x11, 0xcf, 0xae, 0xb3, 0x44, 0xb8, 0xad, 0xbc, 0x1d,
+	0xb7, 0xda, 0xce, 0x78, 0xb6, 0xb5, 0xfb, 0x55, 0x67, 0x8c, 0x67, 0xf9, 0x9d, 0x71, 0xc9, 0xb0,
+	0x81, 0xf1, 0xf0, 0xcd, 0x5c, 0xd8, 0x53, 0x09, 0x76, 0x61, 0xdc, 0xbd, 0x9c, 0x5e, 0x43, 0xf6,
+	0x3f, 0x00, 0xb7, 0x96, 0x2f, 0x57, 0xb1, 0x90, 0xd6, 0x6d, 0x0f, 0x9d, 0x51, 0xd7, 0xaf, 0x30,
+	0xde, 0x73, 0xe8, 0x54, 0x32, 0x31, 0x00, 0x32, 0x97, 0xef, 0x95, 0x45, 0x85, 0xba, 0xd0, 0x9e,
+	0x4b, 0x5f, 0x7c, 0x16, 0x3c, 0xa2, 0x8e, 0xf7, 0x15, 0x3a, 0x0b, 0xc1, 0xf5, 0x72, 0xf5, 0x2e,
+	0x15, 0x3a, 0x63, 0xff, 0x00, 0xc1, 0x5a, 0xdf, 0xce, 0x4a, 0x6d, 0x4a, 0x84, 0x4a, 0xdc, 0x8b,
+	0xec, 0x41, 0xe9, 0xc0, 0x94, 0x12, 0x6d, 0xf0, 0xa6, 0xf2, 0x42, 0xa1, 0xa2, 0xf2, 0xa7, 0xd0,
+	0x93, 0x69, 0xec, 0x0b, 0x93, 0x46, 0xd6, 0x5c, 0xf2, 0x2f, 0xb9, 0x4c, 0x3d, 0x7f, 0x97, 0xf4,
+	0x3e, 0x02, 0x14, 0xc9, 0x7d, 0x61, 0x12, 0x76, 0x04, 0x74, 0x6b, 0x9e, 0x2e, 0x6d, 0xca, 0xa3,
+	0xb2, 0x8a, 0x47, 0x3c, 0xf3, 0xa0, 0x85, 0x95, 0x61, 0x31, 0x8d, 0x51, 0x67, 0xd2, 0xad, 0x6a,
+	0xec, 0x17, 0x26, 0xef, 0xa7, 0x03, 0x70, 0x63, 0x84, 0x9e, 0x2e, 0x51, 0x33, 0x94, 0x4c, 0x0b,
+	0xa3, 0x52, 0xbd, 0x14, 0x9b, 0xf6, 0x2a, 0x0c, 0x7b, 0x01, 0x84, 0xe7, 0x9e, 0x79, 0x83, 0xfd,
+	0xc9, 0xbf, 0xeb, 0x98, 0xdb, 0x18, 0xe3, 0xe2, 0xc7, 0x2f, 0x1d, 0x31, 0x64, 0xc2, 0x35, 0x8f,
+	0x85, 0x15, 0x1a, 0xfb, 0xc7, 0x11, 0x55, 0x18, 0x6f, 0x05, 0xa4, 0x4c, 0xde, 0x81, 0xbd, 0x1b,
+	0x79, 0x2f, 0xd5, 0x83, 0xa4, 0x35, 0x46, 0xa1, 0x3b, 0x4d, 0xed, 0x4a, 0x48, 0x1b, 0xe2, 0x3a,
+	0x51, 0x07, 0xcd, 0x38, 0x9d, 0xb9, 0x14, 0xb4, 0x8e, 0x66, 0x04, 0x97, 0x69, 0x64, 0xc3, 0x24,
+	0x12, 0xb4, 0x81, 0xeb, 0x8d, 0x1b, 0x4c, 0x9b, 0x38, 0xc8, 0x72, 0x74, 0x2d, 0x7c, 0x9f, 0x69,
+	0x81, 0x01, 0x88, 0x77, 0x02, 0xbd, 0x22, 0xd3, 0x22, 0x8d, 0x63, 0xae, 0x33, 0xf6, 0x0c, 0x88,
+	0xb1, 0xdc, 0xa6, 0xa6, 0x3c, 0xaa, 0xfe, 0xba, 0x9b, 0x45, 0xce, 0xfa, 0xa5, 0xf5, 0xe8, 0x3f,
+	0x20, 0x05, 0xc3, 0x08, 0xd4, 0xe7, 0x17, 0xb4, 0x86, 0xe7, 0x72, 0xae, 0xb5, 0xd2, 0xd4, 0x99,
+	0xfc, 0x70, 0x80, 0xcc, 0x66, 0xf9, 0xc1, 0x4c, 0xe1, 0xf0, 0xdc, 0x58, 0x7e, 0x1b, 0x85, 0x66,
+	0xb5, 0xbd, 0x4b, 0xe6, 0xfe, 0xe9, 0x56, 0x07, 0x3b, 0x23, 0xf1, 0x6a, 0xc7, 0x0e, 0x7b, 0x0d,
+	0x07, 0x6f, 0x42, 0x19, 0x20, 0x3e, 0xcd, 0x2e, 0x44, 0xf6, 0x41, 0xe9, 0x80, 0x1d, 0x6e, 0xea,
+	0xda, 0x6e, 0xe1, 0x80, 0xed, 0x92, 0xb8, 0x1d, 0x5e, 0x8d, 0x9d, 0x40, 0x7b, 0xa6, 0x4a, 0x3d,
+	0xd9, 0xe3, 0xe1, 0x0c, 0xfe, 0x5e, 0x73, 0x3b, 0x4a, 0x78, 0xb5, 0x5b, 0x92, 0x7f, 0x83, 0x5e,
+	0xfe, 0x0a, 0x00, 0x00, 0xff, 0xff, 0x3d, 0x71, 0x70, 0xf0, 0x93, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -463,9 +554,9 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type DDPollClient interface {
-	Authenticate(ctx context.Context, in *AuthQuery, opts ...grpc.CallOption) (*AuthResp, error)
 	EstablishPollStream(ctx context.Context, in *PollStreamConfig, opts ...grpc.CallOption) (DDPoll_EstablishPollStreamClient, error)
 	FindPollByKeyWord(ctx context.Context, in *SearchQuery, opts ...grpc.CallOption) (*SearchResp, error)
+	DoAction(ctx context.Context, in *UserAction, opts ...grpc.CallOption) (*ActionSummary, error)
 }
 
 type dDPollClient struct {
@@ -474,15 +565,6 @@ type dDPollClient struct {
 
 func NewDDPollClient(cc grpc.ClientConnInterface) DDPollClient {
 	return &dDPollClient{cc}
-}
-
-func (c *dDPollClient) Authenticate(ctx context.Context, in *AuthQuery, opts ...grpc.CallOption) (*AuthResp, error) {
-	out := new(AuthResp)
-	err := c.cc.Invoke(ctx, "/ddpoll.DDPoll/Authenticate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *dDPollClient) EstablishPollStream(ctx context.Context, in *PollStreamConfig, opts ...grpc.CallOption) (DDPoll_EstablishPollStreamClient, error) {
@@ -526,47 +608,38 @@ func (c *dDPollClient) FindPollByKeyWord(ctx context.Context, in *SearchQuery, o
 	return out, nil
 }
 
+func (c *dDPollClient) DoAction(ctx context.Context, in *UserAction, opts ...grpc.CallOption) (*ActionSummary, error) {
+	out := new(ActionSummary)
+	err := c.cc.Invoke(ctx, "/ddpoll.DDPoll/DoAction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DDPollServer is the server API for DDPoll service.
 type DDPollServer interface {
-	Authenticate(context.Context, *AuthQuery) (*AuthResp, error)
 	EstablishPollStream(*PollStreamConfig, DDPoll_EstablishPollStreamServer) error
 	FindPollByKeyWord(context.Context, *SearchQuery) (*SearchResp, error)
+	DoAction(context.Context, *UserAction) (*ActionSummary, error)
 }
 
 // UnimplementedDDPollServer can be embedded to have forward compatible implementations.
 type UnimplementedDDPollServer struct {
 }
 
-func (*UnimplementedDDPollServer) Authenticate(ctx context.Context, req *AuthQuery) (*AuthResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
-}
 func (*UnimplementedDDPollServer) EstablishPollStream(req *PollStreamConfig, srv DDPoll_EstablishPollStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method EstablishPollStream not implemented")
 }
 func (*UnimplementedDDPollServer) FindPollByKeyWord(ctx context.Context, req *SearchQuery) (*SearchResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindPollByKeyWord not implemented")
 }
+func (*UnimplementedDDPollServer) DoAction(ctx context.Context, req *UserAction) (*ActionSummary, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DoAction not implemented")
+}
 
 func RegisterDDPollServer(s *grpc.Server, srv DDPollServer) {
 	s.RegisterService(&_DDPoll_serviceDesc, srv)
-}
-
-func _DDPoll_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthQuery)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DDPollServer).Authenticate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ddpoll.DDPoll/Authenticate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DDPollServer).Authenticate(ctx, req.(*AuthQuery))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _DDPoll_EstablishPollStream_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -608,17 +681,35 @@ func _DDPoll_FindPollByKeyWord_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DDPoll_DoAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserAction)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DDPollServer).DoAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ddpoll.DDPoll/DoAction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DDPollServer).DoAction(ctx, req.(*UserAction))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _DDPoll_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "ddpoll.DDPoll",
 	HandlerType: (*DDPollServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Authenticate",
-			Handler:    _DDPoll_Authenticate_Handler,
-		},
-		{
 			MethodName: "FindPollByKeyWord",
 			Handler:    _DDPoll_FindPollByKeyWord_Handler,
+		},
+		{
+			MethodName: "DoAction",
+			Handler:    _DDPoll_DoAction_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

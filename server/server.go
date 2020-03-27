@@ -3,15 +3,15 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 
 	pb "github.com/miska12345/DDPoll/ddpoll"
-	models "github.com/miska12345/DDPoll/models"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 var logger *goLogger.Logger
@@ -58,30 +58,66 @@ func newServer(maxConnection int) *server {
 	return s
 }
 
-func (s *server) Authenticate(ctx context.Context, query *pb.AuthQuery) (*pb.AuthResp, error) {
-	var stat int32
-	stat = models.STATUS_ERROR
-	if query.GetName() == "admin" && query.GetPassword() == "666" {
+// Authenticate verifies user login credentials
+func (s *server) authenticate(username, password string) error {
+	// Database stuff for authentication
 
-		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
-			md["sessionKey"] = make([]string, 1)
-			md["sessionKey"][0] = "0xdeadbeef"
-			stat = models.STATUS_OK
-		}
-
-		return &pb.AuthResp{
-			Status: stat,
-		}, nil
+	// REMOVE
+	if username == "admin" && password == "666" {
+		return nil
 	}
-	return nil, errors.New("Failed to verify")
+	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
+// DoAuthenticate check the provided params and authenticate the user
+func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	if len(params) < 2 {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+	}
+	username := params[0]
+	password := params[1]
+	// TODO: Do username format check(i.e. not empty, contains no special character etc)
+
+	// Call our internal authentication routine
+	err = s.authenticate(username, password)
+	if err != nil {
+		return
+	}
+
+	// Associate current context with the particular user
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		logger.Errorf("metadata from context failed, action aborted")
+		return nil, status.Error(codes.Internal, "Internal error")
+	}
+	md["username"] = make([]string, 1)
+	md["username"][0] = params[0]
+
+	return &pb.ActionSummary{
+		Status: pb.Status_OK,
+	}, nil
+}
+
+// DoAction takes UserAction request and distribute into sub-routines for processing
+func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.ActionSummary, err error) {
+	switch action.GetAction() {
+	case pb.UserAction_Authenticate:
+		as, err = s.doAuthenticate(ctx, action.GetParameters())
+	default:
+		logger.Warningf("Unknown action type %s", action.GetAction().String())
+		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
+	}
+	return
+}
+
+// EstablishPollStream takes polls config and stream polls to the user
 func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPoll_EstablishPollStreamServer) error {
 	// stream.Context() to get context
 	panic("not implemented")
 }
 
+// FindPollByKeyWord takes a set of search criterias and return a collection of Polls
+// Maximum number of polls returned is set by models.SEARCH_MAX_RESULT
 func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.SearchResp, error) {
 	panic("not implemented")
 }
