@@ -5,14 +5,17 @@ const STATUS_OK = 1
 
 const SEARCH_MAX_RESULT = 20
 
+// Definition server poll struct
 type Poll struct {
-	id           int64
-	host         string
-	members      []string
-	title        string
-	content      string
-	accessbility int8     // Private - 1 (members is effective) | Public - 0 (members is effective)
-	choices      []string // Description of each choices in the poill
-	counts       []int64  // Vote counts, connected to choices by indices
-	total        int64
+	ID           int64
+	OWNER        string
+	MEMBERS      []string
+	TITLE        string
+	BODY         string
+	CATOGORY     string
+	TAGS         []string
+	ACCESSIBLITY int8     // Private - 1 (members is effective) | Public - 0 (members is effective)
+	CHOICES      []string // Description of each choices in the poill
+	COUNTS       []int64  // Vote counts, connected to choices by indices
+	TOTAL        int64
 }
