@@ -81,3 +81,7 @@ func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPo
 	// stream.Context() to get context
 	panic("not implemented")
 }
+
+func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.SearchResp, error) {
+	panic("not implemented")
+}

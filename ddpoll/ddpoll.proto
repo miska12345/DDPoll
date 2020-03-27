@@ -4,6 +4,7 @@ package ddpoll;
 service DDPoll {
     rpc Authenticate(AuthQuery) returns (AuthResp) {}
     rpc EstablishPollStream(PollStreamConfig) returns (stream Poll) {}
+    rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
 }
 
 message AuthQuery {
@@ -29,6 +30,23 @@ message Poll {
     int32 id = 1;
     string owner = 2;
     string category = 3;
-    repeated string tags = 4;
-    repeated string options = 5;
+    enum DisplayType {
+        OnVote = 0;
+        OnReveal = 1;
+    }
+    DisplayType displayType = 4;
+    repeated string tags = 5;
+    repeated string options = 6;
+}
+
+message SearchQuery {
+    int32 pollID = 1;
+    string keywords = 2;
+    string tags = 3;
+    int32 numResultsMax = 4;
+}
+
+message SearchResp {
+    int32 numResultsActual = 1;
+    repeated Poll polls = 2;
 }
