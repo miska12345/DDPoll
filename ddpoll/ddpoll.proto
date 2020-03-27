@@ -30,13 +30,14 @@ message Poll {
     int32 id = 1;
     string owner = 2;
     string category = 3;
+    string body = 4;
     enum DisplayType {
         OnVote = 0;
         OnReveal = 1;
     }
-    DisplayType displayType = 4;
-    repeated string tags = 5;
-    repeated string options = 6;
+    DisplayType displayType = 5;
+    repeated string tags = 6;
+    repeated string options = 7;
 }
 
 message SearchQuery {
