@@ -8,8 +8,10 @@ import (
 	"net"
 
 	pb "github.com/miska12345/DDPoll/ddpoll"
+	models "github.com/miska12345/DDPoll/models"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 var logger *goLogger.Logger
@@ -20,7 +22,7 @@ type server struct {
 	maxConnection int
 }
 
-func Run(port string) error {
+func Run(port string, maxConnection int) error {
 	logger = goLogger.NewLogger()
 
 	logger.Detach("console")
@@ -43,32 +45,39 @@ func Run(port string) error {
 	logger.Info("Server is running!")
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterDDPollServer(grpcServer, newServer())
+	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection))
 	err = grpcServer.Serve(ls)
 	return err
 }
 
-func newServer() *server {
+func newServer(maxConnection int) *server {
 	s := new(server)
 
 	// Initialize server struct
-
+	s.maxConnection = maxConnection
 	return s
 }
 
 func (s *server) Authenticate(ctx context.Context, query *pb.AuthQuery) (*pb.AuthResp, error) {
+	var stat int32
+	stat = models.STATUS_ERROR
 	if query.GetName() == "admin" && query.GetPassword() == "666" {
-		/*
-			md, ok := metadata.FromIncomingContext(ctx)
-			if ok {
-				md["sessionKey"] = make([]string, 1)
-				md["sessionKey"][0] = "0xdeadbeef"
-			}
-		*/
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			md["sessionKey"] = make([]string, 1)
+			md["sessionKey"][0] = "0xdeadbeef"
+			stat = models.STATUS_OK
+		}
+
 		return &pb.AuthResp{
-			Status:     1,
-			SessionKey: "0xdeadbeef",
+			Status: stat,
 		}, nil
 	}
 	return nil, errors.New("Failed to verify")
+}
+
+func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPoll_EstablishPollStreamServer) error {
+	// stream.Context() to get context
+	panic("not implemented")
 }

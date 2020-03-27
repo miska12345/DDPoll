@@ -1,9 +1,9 @@
 syntax = "proto3";
-
 package ddpoll;
 
 service DDPoll {
     rpc Authenticate(AuthQuery) returns (AuthResp) {}
+    rpc EstablishPollStream(PollStreamConfig) returns (stream Poll) {}
 }
 
 message AuthQuery {
@@ -13,5 +13,22 @@ message AuthQuery {
 
 message AuthResp {
     int32 status = 1;
-    string sessionKey = 2;
+}
+
+message PollStreamConfig {
+    bool showVoted = 1;
+    enum RankBy {
+        Time = 0;
+        Participation = 1;
+        Stars = 2;
+    }
+    RankBy rankBy = 2;
+}
+
+message Poll {
+    int32 id = 1;
+    string owner = 2;
+    string category = 3;
+    repeated string tags = 4;
+    repeated string options = 5;
 }
