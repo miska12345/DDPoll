@@ -66,6 +66,7 @@ func (s *server) authenticate(username, password string) error {
 	if username == "admin" && password == "666" {
 		return nil
 	}
+	s.doCreatePoll(nil, nil)
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 

@@ -13,20 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type poll struct {
-	id           int64
-	host         string
-	members      []string
-	title        string
-	content      string
-	accessbility int8     // Private - 1 (members is effective) | Public - 0 (members is effective)
-	choices      []string // Description of each choices in the poill
-	counts       []int64  // Vote counts, connected to choices by indices
-	total int64
-}
-
-
-
 func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, id int64, err error) {
 	if len(params) < 2 {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
