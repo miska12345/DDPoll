@@ -1,4 +1,4 @@
-// Package db provides an interface for MongoDB operations
+// Package db provides a generic interface for database operations
 package db
 
 import (
@@ -7,12 +7,13 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// Type DB represent an instance of MongoDB
+// Type DB represent an instance of database
 type DB struct {
 	client       *mongo.Client
-	queryContext context.Context
+	queryTimeout uint
 }
 
 // Dial connect to a database server and return Database instance
@@ -24,23 +25,30 @@ func Dial(URL string, connectionTimeout uint, queryTimeout uint) (db *DB, err er
 		return
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel2 := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel2()
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		return
 	}
 
 	// We are connected
-	ctx, _ = context.WithTimeout(context.Background(), time.Duration(queryTimeout)*time.Second)
+	ctx, cancel3 := context.WithTimeout(context.Background(), time.Duration(queryTimeout)*time.Second)
+	defer cancel3()
 	db = &DB{
 		client:       client,
-		queryContext: ctx,
+		queryTimeout: queryTimeout,
 	}
+	return
 }
 
 func (d *DB) SetQueryTimeOut(timeout uint) {
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	d.queryContext = ctx
+	d.queryTimeout = timeout
 }
 
-func (d *DB) 
+func (d *DB) ToPollsDB(database string, collectionName string) *PollDB {
+	return &PollDB{
+		database: d.client.Database(database),
+		clName:   collectionName,
+	}
+}

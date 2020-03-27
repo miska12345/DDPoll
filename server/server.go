@@ -24,7 +24,6 @@ type server struct {
 
 func Run(port string, maxConnection int) error {
 	logger = goLogger.NewLogger()
-
 	logger.Detach("console")
 
 	// console adapter config
@@ -33,6 +32,7 @@ func Run(port string, maxConnection int) error {
 		JsonFormat: false, // Whether or not formatted into a JSON string
 		Format:     "",    // JsonFormat is false, logger message output to console format string
 	}
+
 	// add output to the console
 	logger.Attach("console", goLogger.LOGGER_LEVEL_DEBUG, consoleConfig)
 
@@ -66,7 +66,6 @@ func (s *server) authenticate(username, password string) error {
 	if username == "admin" && password == "666" {
 		return nil
 	}
-	s.doCreatePoll(nil, nil)
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
