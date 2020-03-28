@@ -57,6 +57,7 @@ message UserAction {
         Star = 3;
         Reveal = 4;
         Create = 5;
+        Registeration = 6;
     }
     Action action = 2;
     repeated string parameters = 3; // Array of parameters
