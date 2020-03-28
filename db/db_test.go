@@ -14,15 +14,6 @@ const DB_LINK = "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWr
 const TEST_DB = "test"
 const TEST_COLLECTION = "testCollection"
 
-func TestUserDB(t *testing.T) {
-	db, err := initializeTestEnv()
-	defer db.Disconnect()
-
-	ctx, cancel := db.QueryContext()
-	defer cancel
-	collection := db.Client.Database(TEST_DB).Collection(TEST_COLLECTION)
-}
-
 func TestBasicDB(t *testing.T) {
 	db, err := initializeTestEnv()
 	defer db.Disconnect()
@@ -44,6 +35,21 @@ func TestBasicDB(t *testing.T) {
 	singRes.Decode(&result)
 	assert.Equal(t, result.Name, "pi")
 	assert.Equal(t, result.Value, 3.14159)
+}
+
+func TestUserDB(t *testing.T) {
+	db, err := initializeTestEnv()
+	defer db.Disconnect()
+
+	ctx, cancel := db.QueryContext()
+	defer cancel()
+
+	usersDB := db.ToUserDB(TEST_DB, TEST_COLLECTION, "")
+	id, err := usersDB.CreateNewUser("didntpay", "666")
+
+	fmt.Println(id)
+	assert.Nil(t, err)
+
 }
 
 func TestPollsDB(t *testing.T) {

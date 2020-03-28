@@ -1,12 +1,12 @@
 package db
 
 import (
-	"Time"
 	"crypto/sha1"
 	"encoding/hex"
+	"time"
 
-	goLogger "github.com/phachon/go-logger"
 	"github.com/miska12345/user/User"
+	goLogger "github.com/phachon/go-logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -41,13 +41,13 @@ func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 //CreateNewUser is a method that creates a new user in the user database
 //@Retrun the unique user id
 //@Return error if there is any
-func (ub *UserDB) CreateNewUser(username, password string) {
+func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
 	var collection *mongo.Collection = ub.publicCollection
-	var uid string = ub.GenerateUID(username, password, Time.Now())
+	var uid string = ub.GenerateUID(username, time.Now().String())
 	var passbytes []byte = []byte(password)
 	var salt []byte = ub.genRandomBytes(64)
 
@@ -65,8 +65,14 @@ func (ub *UserDB) CreateNewUser(username, password string) {
 	return uid, nil
 }
 
-func (ub *UserDB) GetUserByID(uid int) (u *User) {
-	u *
+func (ub *UserDB) GetUserByID(uid int) (u *User.User) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+
+	u = new(User.User)
+	return u
 }
 
-func (ub *UserDB) GetUserByName(name string)
+func (ub *UserDB) GetUserByName(name string) {
+
+}
