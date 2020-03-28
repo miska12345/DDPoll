@@ -9,7 +9,6 @@ import (
 
 	"github.com/miska12345/DDPoll/db"
 	pb "github.com/miska12345/DDPoll/ddpoll"
-	"github.com/miska12345/DDPoll/models"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -117,7 +116,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
 	case pb.UserAction_Create:
-		// as, err = s.doCreatePoll(ctx, action.GetParameters())
+		as, err = s.doCreatePoll(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -140,9 +139,11 @@ func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.
 /*********************************************************************************************************************************************************/
 
 func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
-	}
+	/*
+		if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+		}
+	*/
 	db, err := connectToPollsDB(
 		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
 		"admin",
@@ -166,8 +167,10 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 
 	// TODO: Use db.CreatePoll to create poll...
 	// If return is a string(not empty) than ok
-	_ = db
-	return nil, nil
+	db.CreatePoll("miska", "title", "content", "cat", true, []string{"A", "B"})
+	return &pb.ActionSummary{
+		Status: 1,
+	}, nil
 }
 
 // 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
