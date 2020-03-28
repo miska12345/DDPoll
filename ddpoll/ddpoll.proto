@@ -53,11 +53,10 @@ message UserAction {
     enum Action {
         Unknown = 0;
         Authenticate = 1;
-        VoteOne = 2;
-        VoteMultiple = 3;
-        Star = 4;
-        Reveal = 5;
-        Create = 6;
+        VoteMultiple = 2;
+        Star = 3;
+        Reveal = 4;
+        Create = 5;
     }
     Action action = 2;
     repeated string parameters = 3; // Array of parameters
