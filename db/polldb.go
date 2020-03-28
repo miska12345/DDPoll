@@ -2,7 +2,6 @@
 package db
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/miska12345/DDPoll/poll"
@@ -34,18 +33,21 @@ func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	// }
 
 	collection = pd.database.Collection(pd.publicCollection)
-	res, err := collection.InsertOne(ctx, bson.M{
+
+	pid := owner + "#1"
+	_, err := collection.InsertOne(ctx, bson.M{
+		"pid":        pid, // Change in the future
 		"owner":      owner,
 		"public":     public,
 		"title":      title,
 		"content":    content,
 		"category":   catergory,
 		"choices":    choices,
-		"votes":      []uint64{},
-		"voteLimit":  1,
-		"numVoted":   0,
-		"numViewed":  0,
-		"numStarred": 0,
+		"votes":      make([]uint64, len(choices)),
+		"voteLimit":  uint64(1),
+		"numVoted":   uint64(0),
+		"numViewed":  uint64(0),
+		"numStarred": uint64(0),
 		"createTime": time.Now(),
 		"endTime":    time.Now().Add(duration),
 	})
@@ -53,21 +55,18 @@ func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	if err != nil {
 		return "", err
 	}
-	if str, ok := res.InsertedID.(string); ok {
-		return str, nil
-	}
-	return "", fmt.Errorf("Cannot convert resID to string")
+	return pid, nil
 }
 
 // GetPollByID return a poll struct
 // Currently only support search public poll by id
-func (pd *PollDB) GetPollByID(id string) (p *poll.Poll, err error) {
+func (pd *PollDB) GetPollByPID(id string) (p *poll.Poll, err error) {
 	ctx, cancel := pd.db.QueryContext()
 	defer cancel()
 
 	p = new(poll.Poll)
 	collection := pd.database.Collection(pd.publicCollection)
-	filter := bson.M{"_id": id}
+	filter := bson.M{"pid": id}
 	err = collection.FindOne(ctx, filter).Decode(p)
 	if err != nil {
 		pd.logger.Debug(err.Error())

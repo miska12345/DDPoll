@@ -7,7 +7,7 @@ import (
 
 // Definition server poll struct
 type Poll struct {
-	ID         string
+	PID        string
 	Owner      string
 	Public     bool // Private - False | Public - True
 	Title      string
