@@ -36,7 +36,7 @@ func main() {
 	var result struct {
 		Value float64
 	}
-	filter := bson.M{"name": "pi", "value": 3.14159}
+	filter := bson.M{"name": "pix", "value": 3.14159}
 	ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {

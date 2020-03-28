@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/miska12345/DDPoll/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -36,7 +37,20 @@ func TestBasicDB(t *testing.T) {
 	singRes.Decode(&result)
 	assert.Equal(t, result.Name, "pi")
 	assert.Equal(t, result.Value, 3.14159)
-	wipeDatabase(db)
+}
+
+func TestPollsDB(t *testing.T) {
+	_, err := initializeTestEnv()
+	assert.Nil(t, err)
+
+}
+
+func initializeTestEnv() (db *db.DB, err error) {
+	db, err = Dial("mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority", 2*time.Second, 5*time.Second)
+	defer db.Disconnect()
+
+	err = wipeDatabase(db)
+	return
 }
 
 func wipeDatabase(db *DB) error {
