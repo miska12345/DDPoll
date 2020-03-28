@@ -119,6 +119,8 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
 	case pb.UserAction_Create:
 		as, err = s.doCreatePoll(ctx, action.GetParameters())
+	case pb.UserAction_VoteMultiple:
+		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -175,38 +177,17 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 	}, nil
 }
 
-// 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
+/*********************************************************************************************************************************************************/
 
-// 	// Call our internal authentication routine
-// 	err = createPoll(owner, title, content, category, accessibility, options)
-// 	if err != nil {
-// 		return
-// 	}
+/*
+func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	db, err := connectToPollsDB(
+		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
+		"admin",
+		"wassup",
+		"DDPoll",
+		"Polls",
+	)
 
-// 	// Associate current context with the particular user
-// 	md, ok := metadata.FromIncomingContext(ctx)
-// 	if !ok {
-// 		logger.Errorf("metadata from context failed, action aborted")
-// 		return nil, status.Error(codes.Internal, "Internal error")
-// 	}
-// 	md["username"] = make([]string, 1)
-// 	md["username"][0] = params[0]
-
-// 	return &pb.ActionSummary{
-// 		Status: pb.Status_OK,
-// 	}, nil
-// }
-
-// TO-DO
-// func createPoll(host, title, content, category string, accessbility int8, choices []string) *poll.Poll {
-// 	p := new(poll.Poll)
-
-// 	// Initialize poll struct
-// 	p.Owner = host
-// 	p.Title = title
-// 	p.Body = content
-// 	p.Accessibility = accessbility
-// 	p.Choices = choices
-// 	p.Counts = make([]int64, len(choices))
-// 	return p
-// }
+}
+*/
