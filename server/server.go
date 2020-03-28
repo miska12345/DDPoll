@@ -108,7 +108,7 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	md["username"][0] = params[0]
 
 	return &pb.ActionSummary{
-		Status: pb.Status_OK,
+		Info: []byte(""), // TODO: Update status
 	}, nil
 }
 
@@ -164,16 +164,14 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
 	}
-	id, err := db.CreatePoll(params[0], params[1], params[2], params[3], public, options)
+	id, err := db.CreatePoll(params[0], params[1], params[2], params[3], public, time.Hour, options)
 	if err != nil || len(id) == 0 {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to create poll"))
 	}
-	// TODO: Use db.CreatePoll to create poll...
 	// If return is a string(not empty) than ok
-	db.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
 	return &pb.ActionSummary{
-		Status: 1,
+		Info: []byte(id),
 	}, nil
 }
 
