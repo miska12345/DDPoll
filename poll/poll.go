@@ -7,16 +7,18 @@ import (
 
 // Definition server poll struct
 type Poll struct {
-	Owner         string
-	Accessibility bool // Private - True | Public - 0
-	Title         string
-	Body          string
-	Category      string
-	Choices       []string // Description of each choices in the poill
-	Tags          []string
-	Counts        []int64 // Vote counts, connected to choices by indices
-	Total         int64
-	ID            int64
-	CreateTime    time.Time
-	EndTime       time.Time
+	ID         string
+	Owner      string
+	Public     bool // Private - False | Public - True
+	Title      string
+	Content    string
+	Category   string
+	Choices    []string // Description of each choices in the poill
+	Tags       []string
+	Votes      []uint64 // Vote counts, connected to choices by indices
+	numVoted   uint64
+	numViewed  uint64
+	numStarred uint64
+	CreateTime time.Time
+	EndTime    time.Time
 }

@@ -69,7 +69,7 @@ func connectToPollsDB(URL, username, password, database, collectionName string) 
 		logger.Error(err.Error())
 		return
 	}
-	return dbConn.ToPollsDB(database, collectionName), nil
+	return dbConn.ToPollsDB(database, collectionName, ""), nil
 }
 
 // Authenticate verifies user login credentials
@@ -171,8 +171,7 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 	}
 	// TODO: Use db.CreatePoll to create poll...
 	// If return is a string(not empty) than ok
-	db.CreatePoll("miska", "title", "content", "cat", true, []string{"A", "B"})
-	// TODO:
+	db.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
 	return &pb.ActionSummary{
 		Status: 1,
 	}, nil

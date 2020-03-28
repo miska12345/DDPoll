@@ -5,10 +5,13 @@ import (
 	"context"
 	"time"
 
+	goLogger "github.com/phachon/go-logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+var logger *goLogger.Logger
 
 // DB represent an instance of database
 type DB struct {
@@ -39,6 +42,19 @@ func Dial(URL string, connectionTimeout time.Duration, queryTimeout time.Duratio
 		Client:       client,
 		queryTimeout: queryTimeout,
 	}
+
+	logger = goLogger.NewLogger()
+	logger.Detach("console")
+
+	// console adapter config
+	consoleConfig := &goLogger.ConsoleConfig{
+		Color:      true,  // Does the text display the color
+		JsonFormat: false, // Whether or not formatted into a JSON string
+		Format:     "",    // JsonFormat is false, logger message output to console format string
+	}
+
+	// add output to the console
+	logger.Attach("console", goLogger.LOGGER_LEVEL_DEBUG, consoleConfig)
 	return
 }
 
@@ -48,11 +64,13 @@ func (d *DB) SetQueryTimeOut(timeout time.Duration) {
 }
 
 // ToPollsDB convert the current DB instance to a PollDB instance
-func (d *DB) ToPollsDB(database string, collectionName string) *PollDB {
+func (d *DB) ToPollsDB(database, publicCollectionName, privateCollectionName string) *PollDB {
 	return &PollDB{
-		database: d.Client.Database(database),
-		clName:   collectionName,
-		db:       d,
+		database:          d.Client.Database(database),
+		publicCollection:  publicCollectionName,
+		privateCollection: privateCollectionName,
+		logger:            logger,
+		db:                d,
 	}
 }
 
