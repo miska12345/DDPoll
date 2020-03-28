@@ -67,7 +67,6 @@ func (d *DB) SetQueryTimeOut(timeout time.Duration) {
 func (d *DB) ToPollsDB(database, publicCollectionName, privateCollectionName string) *PollDB {
 	db := d.Client.Database(database)
 	return &PollDB{
-		database:         db,
 		publicCollection: db.Collection(publicCollectionName),
 		logger:           logger,
 		db:               d,
