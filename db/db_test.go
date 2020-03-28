@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const DB_LINK = "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority"
 const TEST_DB = "test"
 const TEST_COLLECTION = "testCollection"
 
@@ -56,12 +57,16 @@ func TestPollsDB(t *testing.T) {
 	assert.Equal(t, p.Votes, []uint64{0, 0})
 
 	// Find the poll with invalid id
-	p, err = pollsDB.GetPollByPID(0)
+	p, err = pollsDB.GetPollByPID("")
 	assert.NotNil(t, err)
+
+	res, err := pollsDB.GetPollsByUser("miska")
+	assert.Equal(t, 1, len(res))
+	assert.Equal(t, res[0].PID, p.PID)
 }
 
 func initializeTestEnv() (db *DB, err error) {
-	db, err = Dial("mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority", 2*time.Second, 5*time.Second)
+	db, err = Dial(DB_LINK, 2*time.Second, 5*time.Second)
 
 	err = wipeDatabase(db)
 	return

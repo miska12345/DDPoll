@@ -7,7 +7,7 @@ import (
 
 // Definition server poll struct
 type Poll struct {
-	PID        uint32
+	PID        string `json:"_id,omitempty" bson:"_id,omitempty"`
 	Owner      string
 	Public     bool // Private - False | Public - True
 	Title      string

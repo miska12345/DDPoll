@@ -2,7 +2,8 @@
 package db
 
 import (
-	"hash/fnv"
+	"crypto/sha1"
+	"encoding/hex"
 	"time"
 
 	"github.com/miska12345/DDPoll/poll"
@@ -14,23 +15,23 @@ import (
 // PollDB represent an instance of Poll's database
 type PollDB struct {
 	database          *mongo.Database
-	publicCollection  string
-	privateCollection string
+	publicCollection  *mongo.Collection
+	privateCollection *mongo.Collection
 	logger            *goLogger.Logger
 	db                *DB
 }
 
-func generatePID(args ...string) uint32 {
-	h := fnv.New32a()
+func (pb *PollDB) GeneratePID(args ...string) string {
+	h := sha1.New()
 	for _, v := range args {
 		h.Write([]byte(v))
 	}
-	return h.Sum32()
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // CreatePoll create a new poll and return the poll id
-func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public bool, duration time.Duration, choices []string) (uint32, error) {
-	ctx, cancel := pd.db.QueryContext()
+func (pb *PollDB) CreatePoll(owner, title, content, catergory string, public bool, duration time.Duration, choices []string) (string, error) {
+	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
 	var collection *mongo.Collection
 
@@ -41,11 +42,11 @@ func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	// 	collection = pd.database.Collection(pd.privateCollection)
 	// }
 
-	collection = pd.database.Collection(pd.publicCollection)
+	collection = pb.publicCollection
 
-	pid := generatePID(owner, time.Now().String())
+	pid := pb.GeneratePID(owner, time.Now().String())
 	_, err := collection.InsertOne(ctx, bson.M{
-		"pid":        pid, // Change in the future
+		"_id":        pid, // Change in the future
 		"owner":      owner,
 		"public":     public,
 		"title":      title,
@@ -62,25 +63,48 @@ func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	})
 
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	return pid, nil
 }
 
 // GetPollByID return a poll struct
 // Currently only support search public poll by id
-func (pd *PollDB) GetPollByPID(id uint32) (p *poll.Poll, err error) {
-	ctx, cancel := pd.db.QueryContext()
+func (pb *PollDB) GetPollByPID(id string) (p *poll.Poll, err error) {
+	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
 
 	p = new(poll.Poll)
-	collection := pd.database.Collection(pd.publicCollection)
-	filter := bson.M{"pid": id}
+	collection := pb.publicCollection
+	filter := bson.M{"_id": id}
 	err = collection.FindOne(ctx, filter).Decode(p)
 	if err != nil {
-		pd.logger.Debug(err.Error())
+		pb.logger.Debug(err.Error())
 		return
 	}
-	pd.logger.Debugf("Found poll id %d", id)
+	pb.logger.Debugf("Found poll id %s", id)
 	return
+}
+
+func (pb *PollDB) GetPollsByUser(username string) (res []*poll.Poll, err error) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+
+	cur, err := pb.publicCollection.Find(ctx, bson.M{
+		"owner": username,
+	})
+	if err != nil {
+		return
+	}
+	var restmp []*poll.Poll
+	for cur.Next(ctx) {
+		var poll *poll.Poll
+		err = cur.Decode(poll)
+		if err != nil {
+			pb.logger.Error(err.Error())
+			return restmp, err
+		}
+		res = append(res, poll)
+	}
+	return restmp, nil
 }
