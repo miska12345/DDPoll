@@ -74,6 +74,17 @@ func (d *DB) ToPollsDB(database, publicCollectionName, privateCollectionName str
 	}
 }
 
+// ToUsersDB convert the current DB instance to a UsersDB instance
+func (d *DB) ToUserDB(database, publicCollectionName, privateCollectionName string) *PollDB {
+	db := d.Client.Database(database)
+	return &UsersDB{
+		database:         db,
+		publicCollection: db.Collection(publicCollectionName),
+		logger:           logger,
+		db:               d,
+	}
+}
+
 // Disconnect will disconnect the current client
 func (d *DB) Disconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
