@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/miska12345/DDPoll/models"
-
 	pb "github.com/miska12345/DDPoll/ddpoll"
-	poll "github.com/miska12345/DDPoll/poll"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -107,7 +104,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
 	case pb.UserAction_Create:
-		as, err = s.doCreatePoll(ctx, action.GetParameters())
+		// as, err = s.doCreatePoll(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -130,53 +127,53 @@ func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.
 /*********************************************************************************************************************************************************/
 
 // TO-DO
-func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
-	}
-	owner := params[0]
-	accessibility := params[1]
-	title := params[2]
-	body := params[3]
-	category := params[4]
-	optionNnum := len(params) - models.REQUIRED_POLL_ELEMENTS
-	options := make([]string, optionNnum)
-	for i := 0; i < optionNnum; i++ {
-		options[i] = params[models.REQUIRED_POLL_ELEMENTS+i]
-	}
+// func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+// 	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
+// 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+// 	}
+// 	owner := params[0]
+// 	accessibility := params[1]
+// 	title := params[2]
+// 	body := params[3]
+// 	category := params[4]
+// 	optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
+// 	options := make([]string, optionNum)
+// 	for i := 0; i < optionNum; i++ {
+// 		options[i] = params[models.REQUIRED_POLL_ELEMENTS+i]
+// 	}
 
-	// TODO: Do username format check(i.e. not empty, contains no special character etc)
+// 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
 
-	// Call our internal authentication routine
-	err = createPoll(owner, title, content, accessibility, options)
-	if err != nil {
-		return
-	}
+// 	// Call our internal authentication routine
+// 	err = createPoll(owner, title, content, category, accessibility, options)
+// 	if err != nil {
+// 		return
+// 	}
 
-	// Associate current context with the particular user
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		logger.Errorf("metadata from context failed, action aborted")
-		return nil, status.Error(codes.Internal, "Internal error")
-	}
-	md["username"] = make([]string, 1)
-	md["username"][0] = params[0]
+// 	// Associate current context with the particular user
+// 	md, ok := metadata.FromIncomingContext(ctx)
+// 	if !ok {
+// 		logger.Errorf("metadata from context failed, action aborted")
+// 		return nil, status.Error(codes.Internal, "Internal error")
+// 	}
+// 	md["username"] = make([]string, 1)
+// 	md["username"][0] = params[0]
 
-	return &pb.ActionSummary{
-		Status: pb.Status_OK,
-	}, nil
-}
+// 	return &pb.ActionSummary{
+// 		Status: pb.Status_OK,
+// 	}, nil
+// }
 
 // TO-DO
-func createPoll(host, title, content string, accessbility int8, choices []string) *poll.Poll {
-	p := new(poll.Poll)
+// func createPoll(host, title, content, category string, accessbility int8, choices []string) *poll.Poll {
+// 	p := new(poll.Poll)
 
-	// Initialize poll struct
-	p.Owner = host
-	p.Title = title
-	p.Body = content
-	p.Accessibility = accessbility
-	p.Choices = choices
-	p.Counts = make([]int64, len(choices))
-	return p
-}
+// 	// Initialize poll struct
+// 	p.Owner = host
+// 	p.Title = title
+// 	p.Body = content
+// 	p.Accessibility = accessbility
+// 	p.Choices = choices
+// 	p.Counts = make([]int64, len(choices))
+// 	return p
+// }
