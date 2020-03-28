@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -70,8 +71,33 @@ func TestPollsDB(t *testing.T) {
 	assert.NotNil(t, err)
 
 	res, err := pollsDB.GetPollsByUser("miska")
-	assert.Equal(t, 1, len(res))
-	assert.Equal(t, res[0].PID, p.PID)
+	assert.Nil(t, err)
+	assert.Equal(t, id, (<-res).PID)
+
+	_, ok := <-res
+	assert.False(t, ok)
+}
+
+func TestPollsDBNewstPolls(t *testing.T) {
+	db, err := initializeTestEnv()
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(TEST_DB, TEST_COLLECTION, "")
+
+	ids := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+		assert.Nil(t, err)
+		ids[i] = id
+	}
+	ch, err := pollsDB.GetNewestPolls(10)
+	assert.Nil(t, err)
+
+	for i := 9; i >= 0; i-- {
+		val, ok := <-ch
+		assert.True(t, ok)
+		assert.Equal(t, strconv.Itoa(i), val.Title)
+	}
 }
 
 func initializeTestEnv() (db *DB, err error) {
