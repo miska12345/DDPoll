@@ -1,3 +1,4 @@
+// package poll contain data structures for poll service
 package poll
 
 // Definition server poll struct

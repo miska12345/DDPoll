@@ -5,8 +5,11 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
+	"github.com/miska12345/DDPoll/db"
 	pb "github.com/miska12345/DDPoll/ddpoll"
+	"github.com/miska12345/DDPoll/models"
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -56,6 +59,16 @@ func newServer(maxConnection int) *server {
 	// Initialize server struct
 	s.maxConnection = maxConnection
 	return s
+}
+
+func connectToPollsDB(URL, username, password, database, collectionName string) (dbPoll *db.PollDB, err error) {
+	// TODO: Add params when release
+	dbConn, err := db.Dial(URL, 2*time.Second, 5*time.Second)
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	return dbConn.ToPollsDB(database, collectionName), nil
 }
 
 // Authenticate verifies user login credentials
@@ -126,21 +139,36 @@ func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.
 
 /*********************************************************************************************************************************************************/
 
-// TO-DO
-// func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-// 	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
-// 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
-// 	}
-// 	owner := params[0]
-// 	accessibility := params[1]
-// 	title := params[2]
-// 	body := params[3]
-// 	category := params[4]
-// 	optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
-// 	options := make([]string, optionNum)
-// 	for i := 0; i < optionNum; i++ {
-// 		options[i] = params[models.REQUIRED_POLL_ELEMENTS+i]
-// 	}
+func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+	}
+	db, err := connectToPollsDB(
+		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
+		"admin",
+		"wassup",
+		"DDPoll",
+		"Polls",
+	)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot connect to poll database"))
+	}
+	/*
+		owner := params[0]
+		accessibility := params[1]
+		title := params[2]
+		body := params[3]
+		category := params[4]
+		optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
+		options := params[7:]
+	*/
+
+	// TODO: Use db.CreatePoll to create poll...
+	// If return is a string(not empty) than ok
+	_ = db
+	return nil, nil
+}
 
 // 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
 
