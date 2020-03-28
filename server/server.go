@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/miska12345/DDPoll/db"
@@ -154,20 +155,24 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 		logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot connect to poll database"))
 	}
-	/*
-		owner := params[0]
-		accessibility := params[1]
-		title := params[2]
-		body := params[3]
-		category := params[4]
-		optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
-		options := params[7:]
-	*/
-
+	optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
+	options := params[optionNum:]
+	public, err := strconv.ParseBool(params[4])
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+	}
+	id, err := db.CreatePoll(params[0], params[1], params[2], params[3], public, options)
+	if err != nil || len(id) == 0 {
+		logger.Error(err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to create poll"))
+	}
 	// TODO: Use db.CreatePoll to create poll...
 	// If return is a string(not empty) than ok
-	_ = db
-	return nil, nil
+
+	return &pb.ActionSummary{
+		ID: id,
+	}, nil
 }
 
 // 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
