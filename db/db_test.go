@@ -50,13 +50,13 @@ func TestPollsDB(t *testing.T) {
 	p, err := pollsDB.GetPollByPID(id)
 	assert.Nil(t, err)
 
-	assert.Equal(t, p.PID, "miska#1")
+	assert.Equal(t, p.PID, id)
 	assert.Equal(t, p.Owner, "miska")
 	assert.Equal(t, p.Choices, []string{"Chicken", "Rice"})
 	assert.Equal(t, p.Votes, []uint64{0, 0})
 
 	// Find the poll with invalid id
-	p, err = pollsDB.GetPollByPID("notauser#1")
+	p, err = pollsDB.GetPollByPID(0)
 	assert.NotNil(t, err)
 }
 
