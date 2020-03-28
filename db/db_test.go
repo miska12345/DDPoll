@@ -1,10 +1,10 @@
 package db
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/miska12345/DDPoll/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -13,12 +13,8 @@ const TEST_DB = "test"
 const TEST_COLLECTION = "testCollection"
 
 func TestBasicDB(t *testing.T) {
-	db, err := Dial("mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority", 2*time.Second, 5*time.Second)
-	assert.Nil(t, err)
+	db, err := initializeTestEnv()
 	defer db.Disconnect()
-
-	err = wipeDatabase(db)
-	assert.Nil(t, err)
 
 	ctx, cancel := db.QueryContext()
 	defer cancel()
@@ -40,14 +36,32 @@ func TestBasicDB(t *testing.T) {
 }
 
 func TestPollsDB(t *testing.T) {
-	_, err := initializeTestEnv()
+	db, err := initializeTestEnv()
+	defer db.Disconnect()
 	assert.Nil(t, err)
 
+	pollsDB := db.ToPollsDB(TEST_DB, TEST_COLLECTION, "")
+	id, err := pollsDB.CreatePoll("miska", "example poll", "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+
+	fmt.Println(id)
+	assert.Nil(t, err)
+
+	// Find the poll with the id
+	p, err := pollsDB.GetPollByPID(id)
+	assert.Nil(t, err)
+
+	assert.Equal(t, p.PID, id)
+	assert.Equal(t, p.Owner, "miska")
+	assert.Equal(t, p.Choices, []string{"Chicken", "Rice"})
+	assert.Equal(t, p.Votes, []uint64{0, 0})
+
+	// Find the poll with invalid id
+	p, err = pollsDB.GetPollByPID(0)
+	assert.NotNil(t, err)
 }
 
-func initializeTestEnv() (db *db.DB, err error) {
+func initializeTestEnv() (db *DB, err error) {
 	db, err = Dial("mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority", 2*time.Second, 5*time.Second)
-	defer db.Disconnect()
 
 	err = wipeDatabase(db)
 	return

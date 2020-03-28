@@ -2,7 +2,7 @@
 package db
 
 import (
-	"fmt"
+	"hash/fnv"
 	"time"
 
 	"github.com/miska12345/DDPoll/poll"
@@ -20,8 +20,16 @@ type PollDB struct {
 	db                *DB
 }
 
+func generatePID(args ...string) uint32 {
+	h := fnv.New32a()
+	for _, v := range args {
+		h.Write([]byte(v))
+	}
+	return h.Sum32()
+}
+
 // CreatePoll create a new poll and return the poll id
-func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public bool, duration time.Duration, choices []string) (string, error) {
+func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public bool, duration time.Duration, choices []string) (uint32, error) {
 	ctx, cancel := pd.db.QueryContext()
 	defer cancel()
 	var collection *mongo.Collection
@@ -34,45 +42,45 @@ func (pd *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	// }
 
 	collection = pd.database.Collection(pd.publicCollection)
-	res, err := collection.InsertOne(ctx, bson.M{
+
+	pid := generatePID(owner, time.Now().String())
+	_, err := collection.InsertOne(ctx, bson.M{
+		"pid":        pid, // Change in the future
 		"owner":      owner,
 		"public":     public,
 		"title":      title,
 		"content":    content,
 		"category":   catergory,
 		"choices":    choices,
-		"votes":      []uint64{},
-		"voteLimit":  1,
-		"numVoted":   0,
-		"numViewed":  0,
-		"numStarred": 0,
+		"votes":      make([]uint64, len(choices)),
+		"voteLimit":  uint64(1),
+		"numVoted":   uint64(0),
+		"numViewed":  uint64(0),
+		"numStarred": uint64(0),
 		"createTime": time.Now(),
 		"endTime":    time.Now().Add(duration),
 	})
 
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	if str, ok := res.InsertedID.(string); ok {
-		return str, nil
-	}
-	return "", fmt.Errorf("Cannot convert resID to string")
+	return pid, nil
 }
 
 // GetPollByID return a poll struct
 // Currently only support search public poll by id
-func (pd *PollDB) GetPollByID(id string) (p *poll.Poll, err error) {
+func (pd *PollDB) GetPollByPID(id uint32) (p *poll.Poll, err error) {
 	ctx, cancel := pd.db.QueryContext()
 	defer cancel()
 
 	p = new(poll.Poll)
 	collection := pd.database.Collection(pd.publicCollection)
-	filter := bson.M{"_id": id}
+	filter := bson.M{"pid": id}
 	err = collection.FindOne(ctx, filter).Decode(p)
 	if err != nil {
 		pd.logger.Debug(err.Error())
 		return
 	}
-	pd.logger.Debugf("Found poll id %s", id)
+	pd.logger.Debugf("Found poll id %d", id)
 	return
 }
