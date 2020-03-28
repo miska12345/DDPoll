@@ -13,7 +13,7 @@ func authenticate(client pb.DDPollClient, username, password string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := client.DoAction(ctx, &pb.UserAction{
-		Action:     pb.UserAction_Authenticate,
+		Action:     pb.UserAction_Create,
 		Parameters: []string{username, password},
 	})
 	if err != nil {
