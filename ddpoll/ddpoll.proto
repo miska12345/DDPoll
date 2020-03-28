@@ -64,5 +64,5 @@ message UserAction {
 }
 
 message ActionSummary {
-    Status status = 1;
+    bytes info;
 }
