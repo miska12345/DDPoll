@@ -172,6 +172,7 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 	// TODO: Use db.CreatePoll to create poll...
 	// If return is a string(not empty) than ok
 	db.CreatePoll("miska", "title", "content", "cat", true, []string{"A", "B"})
+	// TODO:
 	return &pb.ActionSummary{
 		Status: 1,
 	}, nil

@@ -64,5 +64,5 @@ message UserAction {
 }
 
 message ActionSummary {
-    bytes info;
+    bytes info = 1;
 }
