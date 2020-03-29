@@ -83,7 +83,7 @@ func connectToPollsDB(URL, database string, collectionNames ...string) (dbPoll *
 	return dbConn.ToPollsDB(database, collectionNames[0], ""), nil
 }
 
-func connectToUsersDB(URL, username, password, database, collectionName string) (dbPoll *db.PollDB, err error) {
+func connectToUsersDB(URL, username, password, database, collectionName string) (dbPoll *db.UserDB, err error) {
 	// TODO: Add params when release
 	dbConn, err := db.Dial(URL, 2*time.Second, 5*time.Second)
 	if err != nil {
@@ -151,11 +151,14 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	return
 }
 
-//Establish account for user with unique usernames
-func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	//Database checking stuff here to see if the usernames is unique
-	return nil, nil
-}
+// Establish account for user with unique usernames
+// func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+// 	Database checking stuff here to see if the usernames is unique
+// 	as = new(pb.ActionSummary)
+// 	err = nil
+
+// 	return
+// }
 
 // EstablishPollStream takes polls config and stream polls to the user
 func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPoll_EstablishPollStreamServer) error {

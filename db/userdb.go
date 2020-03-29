@@ -1,12 +1,12 @@
 package db
 
 import (
-	"Time"
 	"crypto/sha1"
 	"encoding/hex"
+	"time"
 
+	"github.com/miska12345/DDPoll/polluser"
 	goLogger "github.com/phachon/go-logger"
-	"github.com/miska12345/user/User"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -32,29 +32,27 @@ func (ub *UserDB) GenerateUID(args ...string) string {
 
 func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 	salt = make([]byte, size)
-	for _, val := range salt {
-		//TODO: generate random bytes and put into the array
-	}
+	//TODO: generate random bytes and put into the array
 	return salt
 }
 
 //CreateNewUser is a method that creates a new user in the user database
 //@Retrun the unique user id
 //@Return error if there is any
-func (ub *UserDB) CreateNewUser(username, password string) {
+func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
 	var collection *mongo.Collection = ub.publicCollection
-	var uid string = ub.GenerateUID(username, password, Time.Now())
+	var uid string = ub.GenerateUID(username, time.Now().String())
 	var passbytes []byte = []byte(password)
 	var salt []byte = ub.genRandomBytes(64)
 
 	_, err := collection.InsertOne(ctx, bson.M{
 		"_id":  uid,
 		"name": username,
-		"pass": password,
+		"pass": passbytes,
 		"salt": salt,
 	})
 
@@ -65,8 +63,40 @@ func (ub *UserDB) CreateNewUser(username, password string) {
 	return uid, nil
 }
 
-func (ub *UserDB) GetUserByID(uid int) (u *User) {
-	u *
+//GetUserByID will return the user with the id specifield
+func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
+
+	u = new(polluser.User)
+	collection := ub.publicCollection
+
+	filter := bson.M{"_id": uid}
+	err = collection.FindOne(ctx, filter).Decode(u)
+
+	if err != nil {
+		ub.logger.Debug(err.Error())
+		return
+	}
+
+	return
+
 }
 
-func (ub *UserDB) GetUserByName(name string)
+//GetUserByName will return the user with the name specifield
+func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
+
+	u = new(polluser.User)
+	collection := ub.publicCollection
+
+	err = collection.FindOne(ctx, bson.M{"name": name}).Decode(u)
+
+	if err != nil {
+		ub.logger.Debug(err.Error())
+		return
+	}
+
+	return
+}
