@@ -32,9 +32,9 @@ type Poll struct {
 	Tags       []string
 	Votes      []uint64 // Vote counts, connected to choices by indices
 	Stars      uint64
-	numVoted   uint64
-	numViewed  uint64
-	numStarred uint64
+	NumVoted   uint64
+	NumViewed  uint64
+	NumStarred uint64
 	CreateTime time.Time
 	EndTime    time.Time
 }
