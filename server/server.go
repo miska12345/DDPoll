@@ -184,13 +184,14 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	if len(params) < 2 {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
-	as = &pb.ActionSummary{}
+	as = &pb.ActionSummary{Info: []byte("unusuall exit")}
 
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	if _, err_create := s.usersDB.CreateNewUser(username, password); err != nil {
-		err = err_create
+	if _, errcreate := s.usersDB.CreateNewUser(username, password); err != nil {
+		err = errcreate
+		logger.Debug(err.Error())
 		return
 	}
 

@@ -43,6 +43,25 @@ func createPoll(client pb.DDPollClient) {
 	}
 }
 
+func createUser(client pb.DDPollClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	fmt.Println("called")
+	_, err := client.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: "admin",
+			Token:    authToken,
+		},
+		Action:     pb.UserAction_Registeration,
+		Parameters: []string{"didntpay", "fff"},
+	})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+}
+
 func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -54,6 +73,10 @@ func main() {
 	}
 	defer conn.Close()
 	client := pb.NewDDPollClient(conn)
+
 	authenticate(client, "admin", "666")
-	createPoll(client)
+	//createPoll(client)
+
+	createUser(client)
+
 }
