@@ -104,6 +104,11 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 
 }
 
+// UpdateUserPolls will record a new poll in user's history
+func (ub *UserDB) UpdateUserPolls(pid string) (err error){
+	panic("Not implemented")
+}
+
 //GetUserByName will return the user with the name specifield
 func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 	ctx, cancel := ub.db.QueryContext()
