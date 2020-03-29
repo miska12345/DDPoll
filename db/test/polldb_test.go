@@ -153,3 +153,41 @@ func TestConcurrentUpdate(t *testing.T) {
 		assert.Equal(t, expect, p.Votes)
 	}
 }
+
+func TestAddStar(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+
+	id, err := pollsDB.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
+	assert.Nil(t, err)
+
+	// Add 10 stars sequentially
+	for i := 0; i < 10; i++ {
+		err = pollsDB.AddPollStar(id)
+		assert.Nil(t, err)
+	}
+
+	p, err := pollsDB.GetPollByPID(id)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(10), p.Stars)
+
+	id2, err := pollsDB.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
+	assert.Nil(t, err)
+	// Add 10 stars in parallel
+	threads := 1000
+	var wg sync.WaitGroup
+	wg.Add(threads)
+	for i := 0; i < threads; i++ {
+		go func(id string, w *sync.WaitGroup) {
+			err := pollsDB.AddPollStar(id)
+			assert.Nil(t, err)
+			w.Done()
+		}(id2, &wg)
+	}
+	wg.Wait()
+	p, err = pollsDB.GetPollByPID(id2)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(threads), p.Stars)
+}

@@ -126,7 +126,6 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 		"createTime": -1,
 	})
 	findOption.SetLimit(count)
-
 	cur, err := pb.publicCollection.Find(ctx, bson.M{}, findOption)
 	if err != nil {
 		return
@@ -145,6 +144,20 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 		}
 		close(ch)
 	}(ch, cur)
+	return
+}
+
+func (pb *PollDB) AddPollStar(pollID string) (err error) {
+	ctx := context.Background()
+
+	//defer cancel()
+	_, err = pb.publicCollection.UpdateOne(ctx, bson.M{
+		"_id": pollID,
+	}, bson.M{
+		"$inc": bson.M{
+			"stars": 1,
+		},
+	})
 	return
 }
 
