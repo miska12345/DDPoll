@@ -133,6 +133,8 @@ func TestConcurrentUpdate(t *testing.T) {
 		ids[i] = id
 	}
 	var wg sync.WaitGroup
+	threads := 500
+	wg.Add(threads)
 	a := func(ids []string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		for i := 0; i < 10; i++ {
@@ -140,11 +142,11 @@ func TestConcurrentUpdate(t *testing.T) {
 			assert.Nil(t, err)
 		}
 	}
-	for i := 0; i < 4; i++ {
+	for i := 0; i < threads; i++ {
 		go a(ids, &wg)
 	}
 	wg.Wait()
-	expect := []uint64{4, 4}
+	expect := []uint64{uint64(threads), uint64(threads)}
 	for i := 0; i < 10; i++ {
 		p, err2 := pollsDB.GetPollByPID(ids[i])
 		assert.Nil(t, err2)

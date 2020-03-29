@@ -2,8 +2,10 @@
 package db
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"strconv"
 	"time"
 
 	"github.com/miska12345/DDPoll/poll"
@@ -148,39 +150,24 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 
 // TODO: Change function name to update votes
 func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
-	ctx, cancel := pb.db.QueryContext()
-	defer cancel()
-	session, err := pb.db.Client.StartSession()
+	ctx := context.Background()
 	if err != nil {
 		return err
 	}
-	if err = session.StartTransaction(); err != nil {
-		return err
+	m := make(map[string]uint64)
+	// Construct an update map for votes
+	for idx, val := range votes {
+		if val != 0 {
+			target := "votes." + strconv.Itoa(idx)
+			m[target] = val
+		}
 	}
-	if err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
-		p, err := pb.GetPollByPID(pid)
-		if err != nil {
-			sc.AbortTransaction(sc)
-			return err
-		}
-		for idx, _ := range p.Votes {
-			p.Votes[idx] += votes[idx]
-		}
-		_, err2 := pb.publicCollection.UpdateOne(
-			sc,
-			bson.M{"_id": pid},
-			bson.M{"$set": bson.M{"votes": p.Votes}})
-		sc.CommitTransaction(sc)
-		if err2 != nil {
-			pb.logger.Debugf("Error %s on updating poll id %s", err2, pid)
-		} else {
-			pb.logger.Debugf("Updated poll id %s", pid)
-		}
-		return err2
-	}); err != nil {
-		return err
+	_, err = pb.publicCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": pid},
+		bson.M{"$inc": m})
+	if err != nil {
+		pb.logger.Errorf("%s", err)
 	}
-
-	session.EndSession(ctx)
-	return nil
+	return err
 }

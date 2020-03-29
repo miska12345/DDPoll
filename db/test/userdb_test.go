@@ -1,19 +1,13 @@
-package test
-
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+package dbtest
 
 const collectionname = "testCollection_weifeng"
 
-func testConcurrentCreateUser(t *testing.T) {
-	db, err := initializeTestEnv(collectionName)
-	defer db.Disconnect()
+// func testConcurrentCreateUser(t *testing.T) {
+// 	db, err := initializeTestEnv(collectionName)
+// 	defer db.Disconnect()
 
-	assert.Nil(err)
+// 	assert.Nil(err)
 
-	userDB := db.ToUsersDB(Database, collectionname, "")
+// 	userDB := db.ToUsersDB(Database, collectionname, "")
 
-}
+// }
