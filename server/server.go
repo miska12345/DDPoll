@@ -24,9 +24,10 @@ var logger *goLogger.Logger
 type server struct {
 	pb.UnimplementedDDPollServer
 	maxConnection int
+	pollsDB       *db.PollDB
 }
 
-func Run(port string, maxConnection int) error {
+func Run(port string, maxConnection int, pollsDBURL, pollsBase string) error {
 	logger = goLogger.NewLogger()
 	logger.Detach("console")
 
@@ -46,30 +47,40 @@ func Run(port string, maxConnection int) error {
 		logger.Error(err.Error())
 		return err
 	}
+
+	pollsDB, err := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
 	logger.Info("Server is running!")
+
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection))
+	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection, pollsDB))
 	err = grpcServer.Serve(ls)
 	return err
 }
 
-func newServer(maxConnection int) *server {
+func newServer(maxConnection int, pdb *db.PollDB) *server {
 	s := new(server)
 
 	// Initialize server struct
 	s.maxConnection = maxConnection
+	s.pollsDB = pdb
 	return s
 }
 
-func connectToPollsDB(URL, username, password, database, collectionName string) (dbPoll *db.PollDB, err error) {
-	// TODO: Add params when release
+func connectToPollsDB(URL, database string, collectionNames ...string) (dbPoll *db.PollDB, err error) {
+	if len(collectionNames) < 1 {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("expect 1 parameter but received %d", len(collectionNames)))
+	}
 	dbConn, err := db.Dial(URL, 2*time.Second, 5*time.Second)
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
-	return dbConn.ToPollsDB(database, collectionName, ""), nil
+	return dbConn.ToPollsDB(database, collectionNames[0], ""), nil
 }
 
 func connectToUsersDB(URL, username, password, database, collectionName string) (dbPoll *db.PollDB, err error) {
@@ -132,7 +143,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		as, err = 
+		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -141,10 +152,9 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 }
 
 //Establish account for user with unique usernames
-func (s* server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error){
+func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
 	//Database checking stuff here to see if the usernames is unique
-
-
+	return nil, nil
 }
 
 // EstablishPollStream takes polls config and stream polls to the user
@@ -162,30 +172,24 @@ func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.
 /*********************************************************************************************************************************************************/
 
 func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	/*
-		if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
-			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
-		}
-	*/
-	db, err := connectToPollsDB(
-		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
-		"admin",
-		"wassup",
-		"DDPoll",
-		"Polls",
-	)
+	logger.Debugf("Received %d params cap = %d", len(params), cap(params))
+	for _, v := range params {
+		logger.Debug(v)
+	}
+	if len(params) < models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for create", models.REQUIRED_POLL_ELEMENTS+models.MIN_OPTIONS, len(params)))
+	}
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot connect to poll database"))
 	}
-	optionNum := len(params) - models.REQUIRED_POLL_ELEMENTS
-	options := params[optionNum:]
+	options := params[models.REQUIRED_POLL_ELEMENTS:]
 	public, err := strconv.ParseBool(params[4])
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
 	}
-	id, err := db.CreatePoll(params[0], params[1], params[2], params[3], public, time.Hour, options)
+	id, err := s.pollsDB.CreatePoll(params[0], params[1], params[2], params[3], public, time.Hour, options)
 	if err != nil || len(id) == 0 {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to create poll"))

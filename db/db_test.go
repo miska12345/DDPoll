@@ -65,6 +65,7 @@ func TestPollsDB(t *testing.T) {
 	assert.Equal(t, p.Owner, "miska")
 	assert.Equal(t, p.Choices, []string{"Chicken", "Rice"})
 	assert.Equal(t, p.Votes, []uint64{0, 0})
+	assert.Equal(t, 2, len(p.Votes))
 
 	// Find the poll with invalid id
 	p, err = pollsDB.GetPollByPID("")
@@ -97,7 +98,10 @@ func TestPollsDBNewstPolls(t *testing.T) {
 		val, ok := <-ch
 		assert.True(t, ok)
 		assert.Equal(t, strconv.Itoa(i), val.Title)
+		assert.Equal(t, "miska", val.Owner)
 	}
+	_, ok := <-ch
+	assert.False(t, ok)
 }
 
 func initializeTestEnv() (db *DB, err error) {
