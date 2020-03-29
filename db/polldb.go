@@ -68,7 +68,7 @@ func (pb *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 	return pid, nil
 }
 
-// GetPollByID return a poll struct
+// GetPollByPID return a poll struct by the provided pid
 // Currently only support search public poll by id
 func (pb *PollDB) GetPollByPID(id string) (p *poll.Poll, err error) {
 	ctx, cancel := pb.db.QueryContext()
@@ -114,7 +114,7 @@ func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error
 	return
 }
 
-// GetNewstPolls return 'count' number of polls, sorted by create time
+// GetNewestPolls return at most 'count' number of polls, sorted by create time
 func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
@@ -145,11 +145,3 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	}(ch, cur)
 	return
 }
-
-// func (pb *PollDB) UpdateNumVoted(p *poll.Poll) (err error) {
-// 	ctx, cancel := pb.db.QueryContext()
-// 	defer cancel()
-// 	ops := options.Session()
-
-// 	pb.db.Client.StartSession()
-// }
