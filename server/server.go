@@ -39,7 +39,7 @@ func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL
 
 	// console adapter config
 	consoleConfig := &goLogger.ConsoleConfig{
-		Color:      true,  // Does the text display the color
+		Color:      false, // Does the text display the color
 		JsonFormat: false, // Whether or not formatted into a JSON string
 		Format:     "",    // JsonFormat is false, logger message output to console format string
 	}
@@ -167,7 +167,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
 	case pb.UserAction_Create:
-		as, err = s.doCreatePoll(ctx, action.GetParameters())
+		as, err = s.doCreatePoll(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
@@ -189,8 +189,7 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	if _, err_create := s.usersDB.CreateNewUser(username, password); err != nil {
-		err = err_create
+	if _, err = s.usersDB.CreateNewUser(username, password); err != nil {
 		return
 	}
 
@@ -214,7 +213,7 @@ func (s *server) FindPollByKeyWord(ctx context.Context, q *pb.SearchQuery) (*pb.
 /*********************************************************************************************************************************************************/
 
 func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	logger.Debugf("Create started...len(params)=%d", len(params))
+	logger.Debugf("Create started with params=%v", params)
 	if len(params) < poll.CreateParamLength {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for create", poll.RequiredPollElements, len(params)))
 	}
@@ -225,11 +224,12 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Argument [public] is not type true/false"))
 	}
 
-	id, err := s.pollsDB.CreatePoll("miska", params[uParamsTopic], params[uParamsContext], params[uParamsCategory], public, time.Hour, options)
+	id, err := s.pollsDB.CreatePoll(params[uParamsUsername], params[uParamsTopic], params[uParamsContext], params[uParamsCategory], public, time.Hour, options)
 	if err != nil || len(id) == 0 {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to create poll, error=%s", err))
 	}
+	logger.Debugf("New poll created! ID:%s", id)
 	// If return is a string(not empty) than ok
 	return &pb.ActionSummary{
 		Info: []byte(id),
