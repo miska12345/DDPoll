@@ -1,4 +1,4 @@
-package test
+package dbtest
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func testConcurrentCreateUser(t *testing.T) {
 	db, err := initializeTestEnv(collectionName)
 	defer db.Disconnect()
 
-	assert.Nil(err)
+	assert.Nil(t, err)
 
 	userDB := db.ToUsersDB(Database, collectionname, "")
 
