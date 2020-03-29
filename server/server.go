@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/miska12345/DDPoll/db"
@@ -27,8 +28,17 @@ type server struct {
 	usersDB       *db.UserDB
 }
 
+type networkClient struct {
+	userid         string
+	username       string
+	startTime      time.Time
+	lastActiveTime time.Time
+	sync.Mutex
+}
+
 type uSessionsTable struct {
 	table map[string]networkClient
+	sync.Mutex
 }
 
 // Run starts running the server
