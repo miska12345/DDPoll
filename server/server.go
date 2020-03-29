@@ -167,7 +167,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Create:
 		as, err = s.doCreatePoll(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
 	case pb.UserAction_VoteMultiple:
-		as, err = s(ctx, action.GetParameters())
+		as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
 		//TODO: print action summary
@@ -257,6 +257,9 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 	for idx, val := range sVotes {
 		n, err := strconv.ParseInt(val, 10, 64)
 		votes[idx] = uint64(n)
+		if err != nil {
+			return nil, err
+		}
 	}
 	err = db.UpdateNumVoted(pid, votes)
 	return nil, err
