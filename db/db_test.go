@@ -12,7 +12,7 @@ import (
 
 const DB_LINK = "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority"
 const TEST_DB = "test"
-const TEST_COLLECTION = "testCollection"
+const TEST_COLLECTION = "testCollection_weifeng"
 
 func TestBasicDB(t *testing.T) {
 	db, err := initializeTestEnv()
@@ -41,7 +41,7 @@ func TestUserDB(t *testing.T) {
 	db, err := initializeTestEnv()
 	defer db.Disconnect()
 
-	ctx, cancel := db.QueryContext()
+	_, cancel := db.QueryContext()
 	defer cancel()
 
 	usersDB := db.ToUserDB(TEST_DB, TEST_COLLECTION, "")
@@ -49,6 +49,16 @@ func TestUserDB(t *testing.T) {
 
 	fmt.Println(id)
 	assert.Nil(t, err)
+
+	u, err := usersDB.GetUserByID(id)
+
+	assert.Equal(t, id, u.UID)
+	assert.Equal(t, "didntpay", u.name)
+
+	u2, err2 := usersDB.GetUserByName("didntpay")
+
+	assert.Equal(t, id, u2.UID)
+	assert.Equal(t, "didntpay", u2.name)
 
 }
 

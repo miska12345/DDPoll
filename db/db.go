@@ -73,10 +73,10 @@ func (d *DB) ToPollsDB(database, publicCollectionName, privateCollectionName str
 	}
 }
 
-// ToUsersDB convert the current DB instance to a UsersDB instance
-func (d *DB) ToUserDB(database, publicCollectionName, privateCollectionName string) *PollDB {
+// ToUsersDB will convert the current DB instance to a UsersDB instance
+func (d *DB) ToUserDB(database, publicCollectionName, privateCollectionName string) *UserDB {
 	db := d.Client.Database(database)
-	return &UsersDB{
+	return &UserDB{
 		database:         db,
 		publicCollection: db.Collection(publicCollectionName),
 		logger:           logger,

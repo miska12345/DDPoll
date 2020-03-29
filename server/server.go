@@ -72,7 +72,7 @@ func connectToPollsDB(URL, username, password, database, collectionName string) 
 	return dbConn.ToPollsDB(database, collectionName, ""), nil
 }
 
-func connectToUsersDB(URL, username, password, database, collectionName string) (dbPoll *db.PollDB, err error) {
+func connectToUsersDB(URL, username, password, database, collectionName string) (dbPoll *db.UserDB, err error) {
 	// TODO: Add params when release
 	dbConn, err := db.Dial(URL, 2*time.Second, 5*time.Second)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		as, err = 
+		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -141,10 +141,12 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 }
 
 //Establish account for user with unique usernames
-func (s* server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error){
+func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
 	//Database checking stuff here to see if the usernames is unique
+	as = new(pb.ActionSummary)
+	err = nil
 
-
+	return
 }
 
 // EstablishPollStream takes polls config and stream polls to the user

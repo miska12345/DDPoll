@@ -32,9 +32,7 @@ func (ub *UserDB) GenerateUID(args ...string) string {
 
 func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 	salt = make([]byte, size)
-	for _, val := range salt {
-		//TODO: generate random bytes and put into the array
-	}
+	//TODO: generate random bytes and put into the array
 	return salt
 }
 
@@ -54,7 +52,7 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	_, err := collection.InsertOne(ctx, bson.M{
 		"_id":  uid,
 		"name": username,
-		"pass": password,
+		"pass": passbytes,
 		"salt": salt,
 	})
 
@@ -65,14 +63,40 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	return uid, nil
 }
 
-func (ub *UserDB) GetUserByID(uid int) (u *polluser.User) {
-	ctx, cancel := pb.db.QueryContext()
+//GetUserByID will return the user with the id specifield
+func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
+	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
 	u = new(polluser.User)
-	return u
+	collection := ub.publicCollection
+
+	filter := bson.M{"_id": uid}
+	err = collection.FindOne(ctx, filter).Decode(u)
+
+	if err != nil {
+		ub.logger.Debug(err.Error())
+		return
+	}
+
+	return
+
 }
 
-func (ub *UserDB) GetUserByName(name string) {
+//GetUserByName will return the user with the name specifield
+func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
 
+	u = new(polluser.User)
+	collection := ub.publicCollection
+
+	err = collection.FindOne(ctx, bson.M{"name": name}).Decode(u)
+
+	if err != nil {
+		ub.logger.Debug(err.Error())
+		return
+	}
+
+	return
 }
