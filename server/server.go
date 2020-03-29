@@ -209,22 +209,24 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Argument [public] is not type boolean"))
 	}
-	meta, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		logger.Error(err.Error())
-		return nil, status.Error(codes.Internal, "Internal error")
-	}
-	uarray, ok := meta["user"]
-	if !ok {
-		logger.Errorf("User is not part of current context! context=%s", meta)
-		return nil, status.Error(codes.Internal, "Internal error")
-	}
-	if len(uarray) != uArrayNumElements {
-		logger.Errorf("uArray size is invalid, expect %d but is %d", uArrayNumElements, len(uarray))
-		return nil, status.Error(codes.Internal, "Internal error")
-	}
+	/*
+		meta, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			logger.Error(err.Error())
+			return nil, status.Error(codes.Internal, "Internal error")
+		}
+		uarray, ok := meta["user"]
+		if !ok {
+			logger.Errorf("User is not part of current context! context=%s", meta)
+			return nil, status.Error(codes.Internal, "Internal error")
+		}
+		if len(uarray) != uArrayNumElements {
+			logger.Errorf("uArray size is invalid, expect %d but is %d", uArrayNumElements, len(uarray))
+			return nil, status.Error(codes.Internal, "Internal error")
+		}
+	*/
 	// Change in the future
-	id, err := s.pollsDB.CreatePoll(uarray[uArrayUserName], params[uParamsTopic], params[uParamsContext], params[uParamsCategory], public, time.Hour, options)
+	id, err := s.pollsDB.CreatePoll("miska", params[uParamsTopic], params[uParamsContext], params[uParamsCategory], public, time.Hour, options)
 	if err != nil || len(id) == 0 {
 		logger.Error(err.Error())
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to create poll, error=%s", err))
