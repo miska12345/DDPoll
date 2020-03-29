@@ -3,7 +3,6 @@ package db
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -71,9 +70,7 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 
 	u = new(polluser.User)
 	collection := ub.publicCollection
-
 	filter := bson.M{"_id": uid}
-	fmt.Println(uid)
 	err = collection.FindOne(ctx, filter).Decode(u)
 
 	if err != nil {
@@ -81,6 +78,7 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 		return
 	}
 
+	ub.logger.Debugf("Found user id %s", u.UID)
 	return
 
 }
@@ -100,5 +98,6 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 		return
 	}
 
+	ub.logger.Debugf("Found user name %s", u.Name)
 	return
 }

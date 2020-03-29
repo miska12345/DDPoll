@@ -47,7 +47,6 @@ func TestUserDB(t *testing.T) {
 	usersDB := db.ToUserDB(TEST_DB, TEST_COLLECTION, "")
 	id, err := usersDB.CreateNewUser("didntpay", "666")
 
-	fmt.Println(id)
 	assert.Nil(t, err)
 
 	u, err := usersDB.GetUserByID(id)
@@ -56,11 +55,11 @@ func TestUserDB(t *testing.T) {
 	assert.Equal(t, "didntpay", u.Name)
 	assert.Nil(t, err)
 
-	// u2, err2 := usersDB.GetUserByName("didntpay")
+	u2, err2 := usersDB.GetUserByName("didntpay")
 
-	// assert.Equal(t, id, u2.UID)
-	// assert.Equal(t, "didntpay", u2.Name)
-	// assert.Nil(t, err2)
+	assert.Equal(t, id, u2.UID)
+	assert.Equal(t, "didntpay", u2.Name)
+	assert.Nil(t, err2)
 
 }
 

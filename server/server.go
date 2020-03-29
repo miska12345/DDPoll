@@ -84,6 +84,7 @@ func connectToPollsDB(URL, database string, collectionNames ...string) (dbPoll *
 	return dbConn.ToPollsDB(database, collectionNames[0], ""), nil
 }
 
+//TODO add comment
 func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, err error) {
 	// TODO: Add params when release
 	dbConn, err := db.Dial(URL, 2*time.Second, 5*time.Second)
@@ -144,7 +145,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		//as, err = s.doRegistration(ctx, action.GetParameters())
+		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -153,15 +154,28 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 }
 
 // Establish account for user with unique usernames
-func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {	
+func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
 	if len(params) < 2 {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for authentication", 2, len(params)))
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
+	}
+	username := params[0]
+	password := params[1]
+
+	usernamecheck, err := s.usersDB.GetUserByName(username)
+
+	if usernamecheck == nil {
+		_, creationErr := s.usersDB.CreateNewUser(username, password)
+
+		if creationErr != nil {
+			logger.Debug(creationErr.Error())
+		}
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "User name is taken")
 	}
 
-
-	usernamecheck, err :=  
-
-	return
+	return &pb.ActionSummary{
+		Info: []byte("New user" + username + "registered at time" + time.Now().String()), // TODO:
+	}, nil
 }
 
 // EstablishPollStream takes polls config and stream polls to the user
