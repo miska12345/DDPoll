@@ -2,12 +2,16 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"time"
 
+	"github.com/OneOfOne/xxhash"
 	"github.com/miska12345/DDPoll/db"
 	pb "github.com/miska12345/DDPoll/ddpoll"
 	"github.com/miska12345/DDPoll/poll"
@@ -22,9 +26,10 @@ var logger *goLogger.Logger
 // server is a single instance of a server node - a serving entity
 type server struct {
 	pb.UnimplementedDDPollServer
-	maxConnection int
 	pollsDB       *db.PollDB
 	usersDB       *db.UserDB
+	maxConnection int
+	authSalt      []byte
 }
 
 // Run starts running the server
@@ -71,9 +76,12 @@ func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
 	s := new(server)
 
 	// Initialize server struct
-	s.maxConnection = maxConnection
 	s.pollsDB = pdb
 	s.usersDB = udb
+	s.maxConnection = maxConnection
+	s.authSalt = make([]byte, 128)
+
+	rand.Read(s.authSalt)
 	return s
 }
 
@@ -121,29 +129,40 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
 
 	// Call our internal authentication routine
-	uid, err := s.authenticate(username, password)
+	_, err = s.authenticate(username, password)
 	if err != nil {
-		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error)
+		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error())
 		return
 	}
-
-	/*
-		// Associate current context with the particular user
-		s.uSessionsTable[uid] = networkClient{
-			userid:         uid,
-			username:       username,
-			startTime:      time.Now(),
-			lastActiveTime: time.Now(),
-		}
-	*/
-	logger.Debugf("User %s logged in", username)
+	token := s.generateAuthToken(username)
+	logger.Infof("User %s logged in, token: %v", username, token)
 	return &pb.ActionSummary{
-		Info: []byte(uid), // TODO: Update status
+		Info:  []byte(username),
+		Token: token,
 	}, nil
+}
+
+func (s *server) generateAuthToken(username string) uint64 {
+	h := xxhash.New64()
+	r := bytes.NewReader(append(s.authSalt, []byte(username)...))
+	io.Copy(h, r)
+	return h.Sum64()
+}
+
+func (s *server) verifyAuthToken(token uint64, username string) bool {
+	logger.Debugf("generated token is %v", s.generateAuthToken(username))
+	return token == s.generateAuthToken(username)
 }
 
 // DoAction takes UserAction request and distribute into sub-routines for processing
 func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.ActionSummary, err error) {
+	as = &pb.ActionSummary{}
+	if action.GetAction() != pb.UserAction_Authenticate {
+		if !s.verifyAuthToken(action.GetHeader().GetToken(), action.GetHeader().GetUsername()) {
+			err = status.Error(codes.Unauthenticated, "Token is invalid")
+			return
+		}
+	}
 	switch action.GetAction() {
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
