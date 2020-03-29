@@ -146,18 +146,10 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	return
 }
 
-func (pb *PollDB) updatePoll(pid string) (err error) {
-	ctx, cancel := pb.db.QueryContext()
-	defer cancel()
-	count := 0
-	idx := 0
+// func (pb *PollDB) UpdateNumVoted(pid string, votes []int) (err error) {
+// 	ctx, cancel := pb.db.QueryContext()
+// 	defer cancel()
+// 	ops := options.Session()
 
-	filter := bson.M{"_id": pid, "$arrayElemAt": []interface{}{"$votes", idx}}
-	err = pb.publicCollection.FindOne(ctx, filter).Decode(count)
-	if err != nil {
-		return
-	}
-	pb.logger.Debugf("Found vote: %d", count)
-	return nil
-
-}
+// 	pb.db.Client.StartSession()
+// }

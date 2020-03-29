@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/miska12345/DDPoll/db"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 const Database = "testDB"
@@ -23,6 +22,6 @@ func wipeDatabase(db *db.DB, collectionName string) error {
 	ctx, cancel := db.QueryContextEx(5 * time.Second)
 	defer cancel()
 
-	_, err := db.Client.Database(Database).Collection(collectionName).DeleteMany(ctx, bson.M{})
+	err := db.Client.Database(Database).Collection(collectionName).Drop(ctx)
 	return err
 }
