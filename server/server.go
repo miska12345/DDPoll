@@ -33,7 +33,7 @@ type server struct {
 }
 
 // Run starts running the server
-func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL, usersBase string) error {
+func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL, usersBase string) (grpcServer *grpc.Server, err error) {
 	logger = goLogger.NewLogger()
 	logger.Detach("console")
 
@@ -51,25 +51,23 @@ func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL
 	ls, err := net.Listen("tcp", fmt.Sprintf("localhost:%s", port))
 	if err != nil {
 		logger.Error(err.Error())
-		return err
+		return
 	}
 
 	pollsDB, perr := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
 	usersDB, uerr := connectToUsersDB(userDBURL, usersBase, "Users")
-	if perr != nil {
-		logger.Error(err.Error())
-		return perr
-	} else if uerr != nil {
-		logger.Error(err.Error())
-		return uerr
+	if perr != nil || uerr != nil {
+		logger.Error("Failed to initialize database connections")
+		return
 	}
+
 	logger.Info("Server is running!")
 
 	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
+	grpcServer = grpc.NewServer(opts...)
 	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection, pollsDB, usersDB))
-	err = grpcServer.Serve(ls)
-	return err
+	go grpcServer.Serve(ls)
+	return
 }
 
 func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
