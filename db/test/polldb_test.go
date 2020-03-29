@@ -191,3 +191,65 @@ func TestAddStar(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(threads), p.Stars)
 }
+
+func TestAddViewCount(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+
+	id, err := pollsDB.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
+	assert.Nil(t, err)
+
+	// Sequential
+	for i := 0; i < 10; i++ {
+		err = pollsDB.AddPollViewCount(id)
+		assert.Nil(t, err)
+	}
+
+	p, err := pollsDB.GetPollByPID(id)
+	assert.Nil(t, err)
+
+	assert.Equal(t, uint64(10), p.NumViewed)
+
+	// Concurrent
+	id, err = pollsDB.CreatePoll("miska", "title", "content", "cat", true, time.Hour, []string{"A", "B"})
+	assert.Nil(t, err)
+	var wg sync.WaitGroup
+	threads := 1000
+	wg.Add(threads)
+	for i := 0; i < threads; i++ {
+		go func(pid string, w *sync.WaitGroup) {
+			err = pollsDB.AddPollViewCount(pid)
+			assert.Nil(t, err)
+			w.Done()
+		}(id, &wg)
+	}
+	wg.Wait()
+	p, err = pollsDB.GetPollByPID(id)
+	assert.Nil(t, err)
+	assert.Equal(t, uint64(threads), p.NumViewed)
+}
+
+func TestDeletePoll(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+
+	ids := make([]string, 10)
+
+	// Insert 10 polls
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", "", "", "", true, time.Hour, []string{"A", "B"})
+		assert.Nil(t, err)
+		ids[i] = id
+	}
+	// Delete 10 polls
+	for _, v := range ids {
+		err = pollsDB.DeletePollByPID(v)
+		assert.Nil(t, err)
+		_, err := pollsDB.GetPollByPID(v)
+		assert.NotNil(t, err)
+	}
+}

@@ -187,3 +187,26 @@ func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 	}
 	return err
 }
+
+// AddPollViewCount add one view count to the specific poll
+func (pb *PollDB) AddPollViewCount(pid string) (err error) {
+	ctx := context.Background()
+	_, err = pb.publicCollection.UpdateOne(ctx, bson.M{
+		"_id": pid,
+	}, bson.M{
+		"$inc": bson.M{
+			"numViewed": 1,
+		},
+	})
+	return
+}
+
+func (pb *PollDB) DeletePollByPID(pid string) (err error) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+
+	_, err = pb.publicCollection.DeleteOne(ctx, bson.M{
+		"_id": pid,
+	})
+	return
+}
