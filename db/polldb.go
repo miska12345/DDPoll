@@ -146,10 +146,41 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	return
 }
 
-// func (pb *PollDB) UpdateNumVoted(pid string, votes []int) (err error) {
-// 	ctx, cancel := pb.db.QueryContext()
-// 	defer cancel()
-// 	ops := options.Session()
+// TODO: Change function name to update votes
+func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+	session, err := pb.db.Client.StartSession()
+	if err != nil {
+		return err
+	}
+	if err = session.StartTransaction(); err != nil {
+		return err
+	}
+	if err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+		p, err := pb.GetPollByPID(pid)
+		if err != nil {
+			sc.AbortTransaction(sc)
+			return err
+		}
+		for idx, _ := range p.Votes {
+			p.Votes[idx] += votes[idx]
+		}
+		_, err2 := pb.publicCollection.UpdateOne(
+			sc,
+			bson.M{"_id": pid},
+			bson.M{"$set": bson.M{"votes": p.Votes}})
+		sc.CommitTransaction(sc)
+		if err2 != nil {
+			pb.logger.Debugf("Error %s on updating poll id %s", err2, pid)
+		} else {
+			pb.logger.Debugf("Updated poll id %s", pid)
+		}
+		return err2
+	}); err != nil {
+		return err
+	}
 
-// 	pb.db.Client.StartSession()
-// }
+	session.EndSession(ctx)
+	return nil
+}

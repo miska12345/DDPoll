@@ -3,6 +3,7 @@ package dbtest
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -96,4 +97,57 @@ func TestFindPollsUser(t *testing.T) {
 	}
 	_, ok := <-ch
 	assert.False(t, ok)
+}
+
+func TestBasicPollUpdate(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+	ids := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+		assert.Nil(t, err)
+		ids[i] = id
+	}
+	sampleVotes := []uint64{1, 2}
+	for i := 0; i < 10; i++ {
+		pollsDB.UpdateNumVoted(ids[i], sampleVotes)
+	}
+	for i := 0; i < 10; i++ {
+		p, err2 := pollsDB.GetPollByPID(ids[i])
+		assert.Nil(t, err2)
+		assert.Equal(t, sampleVotes, p.Votes)
+	}
+}
+
+func TestConcurrentUpdate(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+	ids := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+		assert.Nil(t, err)
+		ids[i] = id
+	}
+	var wg sync.WaitGroup
+	a := func(ids []string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		for i := 0; i < 10; i++ {
+			err := pollsDB.UpdateNumVoted(ids[i], []uint64{1, 1})
+			assert.Nil(t, err)
+		}
+	}
+	for i := 0; i < 4; i++ {
+		go a(ids, &wg)
+	}
+	wg.Wait()
+	expect := []uint64{4, 4}
+	for i := 0; i < 10; i++ {
+		p, err2 := pollsDB.GetPollByPID(ids[i])
+		assert.Nil(t, err2)
+		assert.Equal(t, expect, p.Votes)
+	}
 }
