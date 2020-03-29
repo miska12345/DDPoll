@@ -147,6 +147,7 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	return
 }
 
+// AddPollStar add a star to the given poll with id pollID
 func (pb *PollDB) AddPollStar(pollID string) (err error) {
 	ctx := context.Background()
 
