@@ -46,14 +46,14 @@ func TestUserDB(t *testing.T) {
 	defer cancel()
 
 	usersDB := db.ToUserDB(TEST_DB, TEST_COLLECTION, "")
-	id, err := usersDB.CreateNewUser("didntpay", "666")
+	id, err := usersDB.CreateNewUser("even", "666")
 
 	assert.Nil(t, err)
 
 	u, err := usersDB.GetUserByID(id)
 
 	assert.Equal(t, id, u.UID)
-	assert.Equal(t, "didntpay", u.Name)
+	assert.Equal(t, "even", u.Name)
 	assert.Nil(t, err)
 
 	u2, err2 := usersDB.GetUserByName("didntpay")
