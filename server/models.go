@@ -13,3 +13,7 @@ const uParamsPublic = 4
 const uParamsUsername = 0
 
 const uParamsPassword = 1
+
+const uParamsPollID = 0
+
+const uParamsVotes = 1
