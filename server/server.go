@@ -14,7 +14,6 @@ import (
 	goLogger "github.com/phachon/go-logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -28,6 +27,11 @@ type server struct {
 	usersDB       *db.UserDB
 }
 
+type uSessionsTable struct {
+	table map[string]networkClient
+}
+
+// Run starts running the server
 func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL, usersBase string) error {
 	logger = goLogger.NewLogger()
 	logger.Detach("console")
@@ -49,14 +53,14 @@ func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL
 		return err
 	}
 
-	pollsDB, p_err := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
-	usersDB, u_err := connectToUsersDB(userDBURL, usersBase, "Users")
-	if p_err != nil {
+	pollsDB, perr := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
+	usersDB, uerr := connectToUsersDB(userDBURL, usersBase, "Users")
+	if perr != nil {
 		logger.Error(err.Error())
-		return p_err
-	} else if u_err != nil {
+		return perr
+	} else if uerr != nil {
 		logger.Error(err.Error())
-		return u_err
+		return uerr
 	}
 	logger.Info("Server is running!")
 
@@ -72,6 +76,7 @@ func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
 
 	// Initialize server struct
 	s.maxConnection = maxConnection
+	//s.uSessionsTable = make(map[string]networkClient)
 	s.pollsDB = pdb
 	s.usersDB = udb
 	return s
@@ -101,14 +106,14 @@ func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, 
 }
 
 // Authenticate verifies user login credentials
-func (s *server) authenticate(username, password string) error {
+func (s *server) authenticate(username, password string) (string, error) {
 	// Database stuff for authentication
 
 	// REMOVE
 	if username == "admin" && password == "666" {
-		return nil
+		return "fakeuid", nil
 	}
-	return status.Error(codes.InvalidArgument, "Authentication Failed")
+	return "", status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
 // DoAuthenticate check the provided params and authenticate the user
@@ -121,23 +126,24 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
 
 	// Call our internal authentication routine
-	err = s.authenticate(username, password)
+	uid, err := s.authenticate(username, password)
 	if err != nil {
+		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error)
 		return
 	}
 
-	// Associate current context with the particular user
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		logger.Errorf("metadata from context failed, action aborted")
-		return nil, status.Error(codes.Internal, "Internal error")
-	}
-	md["user"] = make([]string, 2)
-	md["user"][0] = username
-	md["user"][1] = "pid"
-
+	/*
+		// Associate current context with the particular user
+		s.uSessionsTable[uid] = networkClient{
+			userid:         uid,
+			username:       username,
+			startTime:      time.Now(),
+			lastActiveTime: time.Now(),
+		}
+	*/
+	logger.Debugf("User %s logged in", username)
 	return &pb.ActionSummary{
-		Info: []byte(""), // TODO: Update status
+		Info: []byte(uid), // TODO: Update status
 	}, nil
 }
 
@@ -151,7 +157,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		as, err = s.doRegistration(ctx, action.GetParameters())
+		//as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -207,25 +213,9 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 	public, err := strconv.ParseBool(params[uParamsPublic])
 	if err != nil {
 		logger.Error(err.Error())
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Argument [public] is not type boolean"))
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Argument [public] is not type true/false"))
 	}
-	/*
-		meta, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			logger.Error(err.Error())
-			return nil, status.Error(codes.Internal, "Internal error")
-		}
-		uarray, ok := meta["user"]
-		if !ok {
-			logger.Errorf("User is not part of current context! context=%s", meta)
-			return nil, status.Error(codes.Internal, "Internal error")
-		}
-		if len(uarray) != uArrayNumElements {
-			logger.Errorf("uArray size is invalid, expect %d but is %d", uArrayNumElements, len(uarray))
-			return nil, status.Error(codes.Internal, "Internal error")
-		}
-	*/
-	// Change in the future
+
 	id, err := s.pollsDB.CreatePoll("miska", params[uParamsTopic], params[uParamsContext], params[uParamsCategory], public, time.Hour, options)
 	if err != nil || len(id) == 0 {
 		logger.Error(err.Error())

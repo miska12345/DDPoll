@@ -12,7 +12,7 @@ import (
 func authenticate(client pb.DDPollClient, username, password string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := client.DoAction(ctx, &pb.UserAction{
+	as, err := client.DoAction(ctx, &pb.UserAction{
 		Action:     pb.UserAction_Authenticate,
 		Parameters: []string{username, password},
 	})
@@ -20,6 +20,7 @@ func authenticate(client pb.DDPollClient, username, password string) {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println(string(as.Info))
 	fmt.Println("login ok")
 }
 
