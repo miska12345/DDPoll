@@ -23,6 +23,18 @@ func authenticate(client pb.DDPollClient, username, password string) {
 	fmt.Println("login ok")
 }
 
+func createPoll(client pb.DDPollClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := client.DoAction(ctx, &pb.UserAction{
+		Action:     pb.UserAction_Create,
+		Parameters: []string{"miska", "title", "content", "category", "true", "cookie", "cat"},
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -34,5 +46,6 @@ func main() {
 	}
 	defer conn.Close()
 	client := pb.NewDDPollClient(conn)
-	authenticate(client, "admin", "666")
+	//authenticate(client, "admin", "666")
+	createPoll(client)
 }

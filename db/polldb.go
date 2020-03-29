@@ -86,6 +86,7 @@ func (pb *PollDB) GetPollByPID(id string) (p *poll.Poll, err error) {
 	return
 }
 
+// GetPollsByUser return all polls created by the user
 func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error) {
 	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
@@ -113,6 +114,7 @@ func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error
 	return
 }
 
+// GetNewstPolls return 'count' number of polls, sorted by create time
 func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
@@ -142,33 +144,4 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 		close(ch)
 	}(ch, cur)
 	return
-
-	// findOption := options.Find()
-	// findOption.SetSort(bson.M{
-	// 	"createTime": -1,
-	// })
-	// findOption.SetLimit(count)
-
-	// cur, err := pb.privateCollection.Find(ctx, bson.M{
-	// 	"owner": "miska",
-	// }, findOption)
-	// if err != nil {
-	// 	pb.logger.Error(err.Error())
-	// 	return
-	// }
-	// ch = make(chan *poll.Poll)
-	// go func(c chan *poll.Poll) {
-	// 	for cur.Next(ctx) {
-	// 		var poll poll.Poll
-	// 		err = cur.Decode(&poll)
-	// 		if err != nil {
-	// 			pb.logger.Error(err.Error())
-	// 			close(ch)
-	// 			break
-	// 		}
-	// 		c <- &poll
-	// 	}
-	// 	close(c)
-	// }(ch)
-	// return
 }

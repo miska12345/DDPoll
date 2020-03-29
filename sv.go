@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	server.Run("8080", 100)
+	server.Run("8080", 100, "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority", "Polls")
 }
