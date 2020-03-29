@@ -108,3 +108,19 @@ func (pb *PollDB) GetPollsByUser(username string) (res []*poll.Poll, err error) 
 	}
 	return restmp, nil
 }
+
+func (pb *PollDB) updatePoll(pid string) (err error) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+	count := 0
+	idx := 0
+
+	filter := bson.M{"_id": pid, "$arrayElemAt": []interface{}{"$votes", idx}}
+	err = pb.publicCollection.FindOne(ctx, filter).Decode(count)
+	if err != nil {
+		return
+	}
+	pb.logger.Debugf("Found vote: %d", count)
+	return nil
+
+}
