@@ -1,7 +1,6 @@
 package dbtest
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -13,7 +12,7 @@ const collectionname = "users"
 func TestConcurrentCreateUser(t *testing.T) {
 	db, err := initializeTestEnv(collectionname)
 	defer db.Disconnect()
-	logger.Debug("called")
+
 	assert.Nil(t, err)
 
 	userDB := db.ToUserDB(Database, collectionname, "")
@@ -29,11 +28,11 @@ func TestConcurrentCreateUser(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(4)
 	for i := 0; i < 4; i++ {
-		err := a("didntpay", string(i), &wg)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		a("didntpay4", string(i), &wg)
+
 	}
+	a("didntpayyy", string(14), &wg)
+	a("didntpay4", string(14), &wg)
 	wg.Wait()
 
 }

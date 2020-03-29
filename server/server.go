@@ -172,6 +172,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
+		//TODO: print action summary
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -189,7 +190,7 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	if _, errcreate := s.usersDB.CreateNewUser(username, password); err != nil {
+	if _, errcreate := s.usersDB.CreateNewUser(username, password); errcreate != nil {
 		err = errcreate
 		logger.Debug(err.Error())
 		return

@@ -3,11 +3,13 @@ package db
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
 	goLogger "github.com/phachon/go-logger"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,7 +25,7 @@ type UserDB struct {
 	db                *DB
 }
 
-var ErrUserNameTaken = errors.New("User name already taken")
+//var ErrUserNameTaken = errors.New("User name already taken")
 
 //GenerateUID is a method that generates a unique user id for the userDB
 func (ub *UserDB) GenerateUID(args ...string) string {
@@ -49,23 +51,37 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	var uid string = ub.GenerateUID(username, time.Now().String())
 	var passbytes []byte = []byte(password)
 	var salt []byte = ub.genRandomBytes(64)
+	// var existinguser = new(polluser.User)
 
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
+	//look for any document that applys
 	filter := bson.M{"name": username}
+
+	//if there is none, insert one in the following format
 	replace := bson.M{
-		"_id":  uid,
-		"name": username,
-		"pass": passbytes,
-		"salt": salt,
+		"$setOnInsert": bson.M{
+			"_id":  uid,
+			"name": username,
+			"pass": passbytes,
+			"salt": salt,
+		},
 	}
+
 	err := collection.FindOneAndUpdate(ctx, filter, replace, options.FindOneAndUpdate().SetUpsert(true))
 
-	if err != nil {
+	if err.Err() == mongo.ErrNoDocuments {
+		//There is no user with this name
+		logger.Debug("Created user " + username)
+		return uid, nil
+	} else if err.Err() != nil {
+		//There is user with this name and something went wrong
 		return "", err.Err()
+	} else {
+		//There is user with this name, tell client to pick another one
+		return "", status.Error(codes.AlreadyExists, fmt.Sprintf("User with name %s already exist", username))
 	}
-	return uid, nil
 }
 
 //GetUserByID will return the user with the id specifield

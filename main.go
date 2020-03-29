@@ -46,17 +46,30 @@ func createPoll(client pb.DDPollClient) {
 func createUser(client pb.DDPollClient) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	fmt.Println("called")
+
 	_, err := client.DoAction(ctx, &pb.UserAction{
 		Header: &pb.UserAction_Header{
 			Username: "admin",
 			Token:    authToken,
 		},
 		Action:     pb.UserAction_Registeration,
-		Parameters: []string{"didntpay", "fff"},
+		Parameters: []string{"fuckj", "fff"},
 	})
 
 	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	_, err2 := client.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: "admin",
+			Token:    authToken,
+		},
+		Action:     pb.UserAction_Registeration,
+		Parameters: []string{"fuckj", "fff"},
+	})
+
+	if err2 != nil {
 		fmt.Println(err.Error())
 	}
 
