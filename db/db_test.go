@@ -53,12 +53,14 @@ func TestUserDB(t *testing.T) {
 	u, err := usersDB.GetUserByID(id)
 
 	assert.Equal(t, id, u.UID)
-	assert.Equal(t, "didntpay", u.name)
+	assert.Equal(t, "didntpay", u.Name)
+	assert.Nil(t, err)
 
 	u2, err2 := usersDB.GetUserByName("didntpay")
 
 	assert.Equal(t, id, u2.UID)
-	assert.Equal(t, "didntpay", u2.name)
+	assert.Equal(t, "didntpay", u2.Name)
+	assert.Nil(t, err2)
 
 }
 

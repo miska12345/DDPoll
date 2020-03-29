@@ -5,7 +5,7 @@ import "time"
 //An user object with info in it
 type User struct {
 	UID  string
-	name string
+	Name string
 	pass []byte
 	salt []byte
 
