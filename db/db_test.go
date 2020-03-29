@@ -13,6 +13,7 @@ import (
 const DB_LINK = "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority"
 const TEST_DB = "test"
 const TEST_COLLECTION = "testCollection_weifeng"
+const POLL_DB = "Polls"
 
 func TestBasicDB(t *testing.T) {
 	db, err := initializeTestEnv()
@@ -136,3 +137,27 @@ func wipeDatabase(db *DB) error {
 	_, err := db.Client.Database(TEST_DB).Collection(TEST_COLLECTION).DeleteMany(ctx, bson.M{})
 	return err
 }
+
+// func TestBasicPollUpdate(t *testing.T) {
+// 	db, err := initializeTestEnv()
+// 	defer db.Disconnect()
+
+// 	ctx, cancel := db.QueryContext()
+// 	defer cancel()
+// 	pollsDB := db.ToPollsDB(POLL_DB, POLL_DB, "")
+// 	ids := make([]string, 10)
+// 	for i := 0; i < 10; i++ {
+// 		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+// 		assert.Nil(t, err)
+// 		ids[i] = id
+// 	}
+// 	sampleVotes := []int{1, 2}
+// 	pollsDB.UpdateNumVoted(ids[0], sampleVotes)
+// 	result := new(poll.Poll)
+// 	ctx, cancel2 := db.QueryContext()
+// 	err2 := pollsDB.publicCollection.FindOne(ctx, bson.M{"_id": ids[0]}).Decode(result)
+// 	assert.Nil(t, err2)
+// 	defer cancel2()
+
+// 	assert.Equal(t, result.Votes, sampleVotes)
+// }

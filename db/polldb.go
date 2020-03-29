@@ -146,7 +146,7 @@ func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
 	return
 }
 
-// func (pb *PollDB) UpdateNumVoted(p *poll.Poll) (err error) {
+// func (pb *PollDB) UpdateNumVoted(pid string, votes []int) (err error) {
 // 	ctx, cancel := pb.db.QueryContext()
 // 	defer cancel()
 // 	ops := options.Session()
