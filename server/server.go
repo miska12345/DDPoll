@@ -167,7 +167,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Create:
 		as, err = s.doCreatePoll(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
 	case pb.UserAction_VoteMultiple:
-		as, err = s(ctx, action.GetParameters())
+		as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
