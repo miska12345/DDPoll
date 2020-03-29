@@ -12,14 +12,15 @@ import (
 func authenticate(client pb.DDPollClient, username, password string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := client.DoAction(ctx, &pb.UserAction{
-		Action:     pb.UserAction_Create,
+	as, err := client.DoAction(ctx, &pb.UserAction{
+		Action:     pb.UserAction_Authenticate,
 		Parameters: []string{username, password},
 	})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println(string(as.Info))
 	fmt.Println("login ok")
 }
 
@@ -28,7 +29,7 @@ func createPoll(client pb.DDPollClient) {
 	defer cancel()
 	_, err := client.DoAction(ctx, &pb.UserAction{
 		Action:     pb.UserAction_Create,
-		Parameters: []string{"miska", "title", "content", "category", "true", "cookie", "cat"},
+		Parameters: []string{"title", "content", "category", "true", "cookie", "cat"},
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -46,6 +47,6 @@ func main() {
 	}
 	defer conn.Close()
 	client := pb.NewDDPollClient(conn)
-	//authenticate(client, "admin", "666")
+	authenticate(client, "admin", "666")
 	createPoll(client)
 }

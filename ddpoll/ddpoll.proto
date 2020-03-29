@@ -49,7 +49,8 @@ message SearchResp {
 }
 
 message UserAction {
-    uint32 resourceID = 1;  // The object that this action manipulates
+    uint64 uid = 1;
+    uint32 resourceID = 2;  // The object that this action manipulates
     enum Action {
         Unknown = 0;
         Authenticate = 1;
@@ -59,8 +60,8 @@ message UserAction {
         Create = 5;
         Registeration = 6;
     }
-    Action action = 2;
-    repeated string parameters = 3; // Array of parameters
+    Action action = 3;
+    repeated string parameters = 4; // Array of parameters
 }
 
 message ActionSummary {
