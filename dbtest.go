@@ -2,11 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"strings"
 
-	"github.com/miska12345/DDPoll/db"
+	"github.com/OneOfOne/xxhash"
 )
 
 func main() {
-	_, err := db.Dial("mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority", 2, 5)
-	fmt.Println(err)
+	h := xxhash.New64()
+	// r, err := os.Open("......")
+	// defer f.Close()
+	r := strings.NewReader("hello")
+	io.Copy(h, r)
+	fmt.Println("xxhash.Backend:", xxhash.Backend)
+	fmt.Println("File checksum:", h.Sum64())
 }
