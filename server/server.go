@@ -28,7 +28,7 @@ type server struct {
 	usersDB       *db.UserDB
 }
 
-func Run(port string, maxConnection int, pollsDBURL, pollsBase string) error {
+func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL, usersBase string) error {
 	logger = goLogger.NewLogger()
 	logger.Detach("console")
 
@@ -49,26 +49,31 @@ func Run(port string, maxConnection int, pollsDBURL, pollsBase string) error {
 		return err
 	}
 
-	pollsDB, err := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
-	if err != nil {
+	pollsDB, p_err := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
+	usersDB, u_err := connectToUsersDB(userDBURL, usersBase, "Users")
+	if p_err != nil {
 		logger.Error(err.Error())
-		return err
+		return p_err
+	} else if u_err != nil {
+		logger.Error(err.Error())
+		return u_err
 	}
 	logger.Info("Server is running!")
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection, pollsDB))
+	pb.RegisterDDPollServer(grpcServer, newServer(maxConnection, pollsDB, usersDB))
 	err = grpcServer.Serve(ls)
 	return err
 }
 
-func newServer(maxConnection int, pdb *db.PollDB) *server {
+func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
 	s := new(server)
 
 	// Initialize server struct
 	s.maxConnection = maxConnection
 	s.pollsDB = pdb
+	s.usersDB = udb
 	return s
 }
 
