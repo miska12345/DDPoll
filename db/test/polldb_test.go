@@ -133,7 +133,7 @@ func TestConcurrentUpdate(t *testing.T) {
 		ids[i] = id
 	}
 	var wg sync.WaitGroup
-	threads := 500
+	threads := 200
 	wg.Add(threads)
 	a := func(ids []string, wg *sync.WaitGroup) {
 		defer wg.Done()
