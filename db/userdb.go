@@ -8,6 +8,8 @@ import (
 
 	"github.com/miska12345/DDPoll/polluser"
 	goLogger "github.com/phachon/go-logger"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,23 +46,56 @@ func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 //@Return error if there is any
 func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 
+	var collection *mongo.Collection
+	var uid string
+	var passbytes []byte
+	var salt []byte
+
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
-	var collection *mongo.Collection = ub.publicCollection
-	var uid string = ub.GenerateUID(username, time.Now().String())
-	var passbytes []byte = []byte(password)
-	var salt []byte = ub.genRandomBytes(64)
-
-	_, err := collection.InsertOne(ctx, bson.M{
-		"_id":  uid,
-		"name": username,
-		"pass": passbytes,
-		"salt": salt,
-	})
-
+	session, err := ub.db.Client.StartSession()
 	if err != nil {
 		return "", err
+	}
+
+	if err = session.StartTransaction(); err != nil {
+		return "", err
+	}
+
+	if err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+		_, getErr := ub.GetUserByName(username)
+
+		if getErr == ErrUserNameTaken {
+			return status.Error(codes.InvalidArgument, getErr.Error())
+		} else if getErr != nil {
+			sc.AbortTransaction(sc)
+			return status.Error(codes.Internal, getErr.Error())
+		}
+		collection = ub.publicCollection
+		uid = ub.GenerateUID(username, time.Now().String())
+		passbytes = []byte(password)
+		salt = ub.genRandomBytes(64)
+
+		_, err := collection.InsertOne(ctx, bson.M{
+			"_id":  uid,
+			"name": username,
+			"pass": passbytes,
+			"salt": salt,
+		})
+
+		if err != nil {
+			sc.AbortTransaction(sc)
+			return err
+		}
+
+		if err = session.CommitTransaction(sc); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return "", status.Error(codes.Unknown, err.Error())
 	}
 
 	return uid, nil

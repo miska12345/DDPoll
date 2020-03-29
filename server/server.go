@@ -170,21 +170,9 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	_, getErr := s.usersDB.GetUserByName(username)
-
-	if getErr == db.ErrUserNameTaken {
-		err = status.Error(codes.InvalidArgument, getErr.Error())
+	if _, err_create := s.usersDB.CreateNewUser(username, password); err != nil {
+		err = err_create
 		return
-	} else if getErr != nil {
-		err = status.Error(codes.Internal, "Uknown error during checking to duplicate User names")
-		return
-	} else {
-		//safe to proceed
-		_, creationErr := s.usersDB.CreateNewUser(username, password)
-
-		if creationErr != nil {
-			logger.Debug(creationErr.Error() + "creation error during registration")
-		}
 	}
 
 	return &pb.ActionSummary{
