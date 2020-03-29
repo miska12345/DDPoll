@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/miska12345/user/User"
+	"github.com/miska12345/DDPoll/polluser"
 	goLogger "github.com/phachon/go-logger"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,11 +65,11 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	return uid, nil
 }
 
-func (ub *UserDB) GetUserByID(uid int) (u *User.User) {
+func (ub *UserDB) GetUserByID(uid int) (u *polluser.User) {
 	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
 
-	u = new(User.User)
+	u = new(polluser.User)
 	return u
 }
 

@@ -1,4 +1,4 @@
-package User
+package polluser
 
 import "time"
 
