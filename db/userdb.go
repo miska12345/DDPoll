@@ -3,6 +3,7 @@ package db
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -72,6 +73,7 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 	collection := ub.publicCollection
 
 	filter := bson.M{"_id": uid}
+	fmt.Println(uid)
 	err = collection.FindOne(ctx, filter).Decode(u)
 
 	if err != nil {
