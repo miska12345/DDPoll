@@ -167,7 +167,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Create:
 		as, err = s.doCreatePoll(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
 	case pb.UserAction_VoteMultiple:
-		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
+		as, err = s(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
@@ -236,7 +236,6 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 
 /*********************************************************************************************************************************************************/
 
-/*
 func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
 	db, err := connectToPollsDB(
 		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
@@ -245,6 +244,17 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 		"DDPoll",
 		"Polls",
 	)
+	if len(params) < 2 {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
+	}
 
+	pid := params[uParamsPollID]
+	sVotes := params[uParamsPollID+1:]
+	votes := make([]uint64, len(sVotes))
+	for idx, val := range sVotes {
+		n, err := strconv.ParseInt(val, 10, 64)
+		votes[idx] = uint64(n)
+	}
+	err = db.UpdateNumVoted(pid, votes)
+	return nil, err
 }
-*/

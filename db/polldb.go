@@ -176,6 +176,8 @@ func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 			m[target] = val
 		}
 	}
+	// Increment number of poll participants
+	m["numVoted"] = 1
 	_, err = pb.publicCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": pid},
