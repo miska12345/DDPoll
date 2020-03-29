@@ -144,7 +144,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		as, err = s.doRegistration(ctx, action.GetParameters())
+		//as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))

@@ -115,6 +115,7 @@ func TestPollsDBNewstPolls(t *testing.T) {
 	for i := 9; i >= 0; i-- {
 		val, ok := <-ch
 		assert.True(t, ok)
+		assert.Equal(t, val.PID, ids[i])
 		assert.Equal(t, strconv.Itoa(i), val.Title)
 		assert.Equal(t, "miska", val.Owner)
 	}
