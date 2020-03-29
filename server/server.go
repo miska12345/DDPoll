@@ -254,6 +254,9 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 	for idx, val := range sVotes {
 		n, err := strconv.ParseInt(val, 10, 64)
 		votes[idx] = uint64(n)
+		if err != nil {
+			return nil, err
+		}
 	}
 	err = db.UpdateNumVoted(pid, votes)
 	return nil, err
