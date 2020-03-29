@@ -10,11 +10,11 @@ import (
 	goLogger "github.com/phachon/go-logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // PollDB represent an instance of Poll's database
 type PollDB struct {
-	database          *mongo.Database
 	publicCollection  *mongo.Collection
 	privateCollection *mongo.Collection
 	logger            *goLogger.Logger
@@ -58,8 +58,8 @@ func (pb *PollDB) CreatePoll(owner, title, content, catergory string, public boo
 		"numVoted":   uint64(0),
 		"numViewed":  uint64(0),
 		"numStarred": uint64(0),
-		"createTime": time.Now(),
-		"endTime":    time.Now().Add(duration),
+		"createTime": time.Now().UTC(),
+		"endTime":    time.Now().Add(duration).UTC(),
 	})
 
 	if err != nil {
@@ -86,7 +86,8 @@ func (pb *PollDB) GetPollByPID(id string) (p *poll.Poll, err error) {
 	return
 }
 
-func (pb *PollDB) GetPollsByUser(username string) (res []*poll.Poll, err error) {
+// GetPollsByUser return all polls created by the user
+func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error) {
 	ctx, cancel := pb.db.QueryContext()
 	defer cancel()
 
@@ -96,17 +97,53 @@ func (pb *PollDB) GetPollsByUser(username string) (res []*poll.Poll, err error) 
 	if err != nil {
 		return
 	}
-	var restmp []*poll.Poll
-	for cur.Next(ctx) {
-		var poll *poll.Poll
-		err = cur.Decode(poll)
-		if err != nil {
-			pb.logger.Error(err.Error())
-			return restmp, err
+	ch = make(chan *poll.Poll)
+	go func(ch chan *poll.Poll, c *mongo.Cursor) {
+		for cur.Next(ctx) {
+			var poll poll.Poll
+			err = cur.Decode(&poll)
+			if err != nil {
+				pb.logger.Error(err.Error())
+				close(ch)
+				break
+			}
+			ch <- &poll
 		}
-		res = append(res, poll)
+		close(ch)
+	}(ch, cur)
+	return
+}
+
+// GetNewstPolls return 'count' number of polls, sorted by create time
+func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
+	ctx, cancel := pb.db.QueryContext()
+	defer cancel()
+
+	findOption := options.Find()
+	findOption.SetSort(bson.M{
+		"createTime": -1,
+	})
+	findOption.SetLimit(count)
+
+	cur, err := pb.publicCollection.Find(ctx, bson.M{}, findOption)
+	if err != nil {
+		return
 	}
-	return restmp, nil
+	ch = make(chan *poll.Poll)
+	go func(ch chan *poll.Poll, c *mongo.Cursor) {
+		for cur.Next(ctx) {
+			var poll poll.Poll
+			err = cur.Decode(&poll)
+			if err != nil {
+				pb.logger.Error(err.Error())
+				close(ch)
+				break
+			}
+			ch <- &poll
+		}
+		close(ch)
+	}(ch, cur)
+	return
 }
 
 func (pb *PollDB) updatePoll(pid string) (err error) {

@@ -67,6 +67,16 @@ func (d *DB) SetQueryTimeOut(timeout time.Duration) {
 func (d *DB) ToPollsDB(database, publicCollectionName, privateCollectionName string) *PollDB {
 	db := d.Client.Database(database)
 	return &PollDB{
+		publicCollection: db.Collection(publicCollectionName),
+		logger:           logger,
+		db:               d,
+	}
+}
+
+// ToUsersDB will convert the current DB instance to a UsersDB instance
+func (d *DB) ToUserDB(database, publicCollectionName, privateCollectionName string) *UserDB {
+	db := d.Client.Database(database)
+	return &UserDB{
 		database:         db,
 		publicCollection: db.Collection(publicCollectionName),
 		logger:           logger,
