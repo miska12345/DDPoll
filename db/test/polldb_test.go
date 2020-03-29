@@ -56,15 +56,43 @@ func TestPollsDBNewstPolls(t *testing.T) {
 		assert.Nil(t, err)
 		ids[i] = id
 	}
-	ch, err := pollsDB.GetNewestPolls(10)
+	ch, err := pollsDB.GetNewestPolls(5)
 	assert.Nil(t, err)
 
-	for i := 9; i >= 0; i-- {
+	for i := 9; i >= 5; i-- {
 		val, ok := <-ch
 		assert.True(t, ok)
 		assert.Equal(t, val.PID, ids[i])
 		assert.Equal(t, strconv.Itoa(i), val.Title)
 		assert.Equal(t, "miska", val.Owner)
+	}
+	_, ok := <-ch
+	assert.False(t, ok)
+}
+
+func TestFindPollsUser(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+
+	ids := make([]string, 10)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", "title is not important", "", "", true, time.Hour, []string{"Yes", "No"})
+		assert.Nil(t, err)
+		ids[i] = id
+		_, err = pollsDB.CreatePoll("not miska", "title is very important", "", "", true, time.Hour, []string{"Yes", "No"})
+		assert.Nil(t, err)
+	}
+
+	ch, err := pollsDB.GetPollsByUser("miska")
+	assert.Nil(t, err)
+
+	for i := 0; i < 10; i++ {
+		v, ok := <-ch
+		assert.True(t, ok)
+		assert.Equal(t, "miska", v.Owner)
+		assert.Contains(t, ids, v.PID)
 	}
 	_, ok := <-ch
 	assert.False(t, ok)
