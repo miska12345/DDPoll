@@ -2,15 +2,13 @@ package server
 
 const uArrayNumElements = 2
 
-const uArrayUserName = 0
+const uParamsTopic = 1
 
-const uParamsTopic = 0
+const uParamsContext = 2
 
-const uParamsContext = 1
+const uParamsCategory = 3
 
-const uParamsCategory = 2
-
-const uParamsPublic = 3
+const uParamsPublic = 4
 
 const uParamsUsername = 0
 

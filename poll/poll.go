@@ -31,6 +31,7 @@ type Poll struct {
 	Choices    []string // Description of each choices in the poill
 	Tags       []string
 	Votes      []uint64 // Vote counts, connected to choices by indices
+	Stars      uint64
 	numVoted   uint64
 	numViewed  uint64
 	numStarred uint64

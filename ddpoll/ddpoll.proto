@@ -22,18 +22,19 @@ message PollStreamConfig {
 }
 
 message Poll {
-    uint32 id = 1;
+    uint64 id = 1;
     string owner = 2;
     string category = 3;
     string body = 4;
+    uint64 stars = 5;
     enum DisplayType {
         OnVote = 0;
         OnReveal = 1;
     }
-    DisplayType displayType = 5;
-    repeated string tags = 6;
-    repeated string options = 7;
-    bytes attachment = 8;
+    DisplayType displayType = 6;
+    repeated string tags = 7;
+    repeated string options = 8;
+    bytes attachment = 9;
 }
 
 message SearchQuery {
