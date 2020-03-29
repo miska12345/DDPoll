@@ -167,7 +167,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_VoteMultiple:
 		// as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
-		//as, err = s.doRegistration(ctx, action.GetParameters())
+		as, err = s.doRegistration(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -180,19 +180,26 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	if len(params) < 2 {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
+	as = &pb.ActionSummary{}
+
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	usernamecheck, err := s.usersDB.GetUserByName(username)
+	_, getErr := s.usersDB.GetUserByName(username)
 
-	if usernamecheck == nil {
+	if getErr == db.ErrUserNameTaken {
+		err = status.Error(codes.InvalidArgument, getErr.Error())
+		return
+	} else if getErr != nil {
+		err = status.Error(codes.Internal, "Uknown error during checking to duplicate User names")
+		return
+	} else {
+		//safe to proceed
 		_, creationErr := s.usersDB.CreateNewUser(username, password)
 
 		if creationErr != nil {
-			logger.Debug(creationErr.Error())
+			logger.Debug(creationErr.Error() + "creation error during registration")
 		}
-	} else {
-		return nil, status.Error(codes.InvalidArgument, "User name is taken")
 	}
 
 	return &pb.ActionSummary{

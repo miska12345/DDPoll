@@ -3,6 +3,7 @@ package db
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -20,6 +21,8 @@ type UserDB struct {
 	logger            *goLogger.Logger
 	db                *DB
 }
+
+var ErrUserNameTaken = errors.New("User name already taken")
 
 //GenerateUID is a method that generates a unique user id for the userDB
 func (ub *UserDB) GenerateUID(args ...string) string {
@@ -93,8 +96,10 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 
 	err = collection.FindOne(ctx, bson.M{"name": name}).Decode(u)
 
-	if err != nil {
-		ub.logger.Debug(err.Error())
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	} else if err != nil {
+		logger.Debug(err.Error() + " at getting user by name")
 		return
 	}
 
