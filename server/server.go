@@ -168,7 +168,7 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	// Call our internal authentication routine
 	err = s.authenticate(username, password)
 	if err != nil {
-		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error())
+		logger.Debugf("User %s failed to login because err = %s", username, err.Error())
 		return
 	}
 	token := s.generateAuthToken(username)

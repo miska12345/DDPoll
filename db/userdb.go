@@ -134,7 +134,7 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 		return
 	}
 
-	ub.logger.Debugf("Found user name %s", u.Name)
+	//ub.logger.Debugf("Found user name %s", u.Name)
 	return
 }
 
