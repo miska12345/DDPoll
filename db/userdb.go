@@ -1,11 +1,9 @@
 package db
 
 import (
-	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"hash"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -41,7 +39,6 @@ func (ub *UserDB) GenerateUID(args ...string) string {
 func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 	salt = make([]byte, size)
 	//TODO: generate random bytes and put into the array
-	rand.Read(salt)
 	return salt
 }
 
@@ -49,16 +46,11 @@ func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 //@Retrun the unique user id
 //@Return error if there is any
 func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
-	var h hash.Hash = sha1.New()
-	var salt []byte = ub.genRandomBytes(64)
+
 	var collection *mongo.Collection = ub.publicCollection
 	var uid string = ub.GenerateUID(username, time.Now().String())
-
-	h.Write([]byte(password))
-	h.Write(salt)
-
-	var passhash []byte = h.Sum(nil)
-
+	var passbytes []byte = []byte(password)
+	var salt []byte = ub.genRandomBytes(64)
 	// var existinguser = new(polluser.User)
 
 	ctx, cancel := ub.db.QueryContext()
@@ -72,7 +64,7 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 		"$setOnInsert": bson.M{
 			"_id":  uid,
 			"name": username,
-			"pass": passhash,
+			"pass": passbytes,
 			"salt": salt,
 		},
 	}
@@ -113,8 +105,15 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 }
 
 // UpdateUserPolls will record a new poll in user's history
-func (ub *UserDB) UpdateUserPolls(pid string) (err error) {
-	panic("Not implemented")
+func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (err error) {
+	// ctx, cancel := ub.db.QueryContext()
+	// defer cancel()
+
+	// ub.publicCollection.UpdateOne(ctx, bson.M{
+	// 	"name": username,
+	// }, bson.M{})
+	// return
+	panic("")
 }
 
 //GetUserByName will return the user with the name specifield
@@ -128,7 +127,7 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 	err = collection.FindOne(ctx, bson.M{"name": name}).Decode(u)
 
 	if err == mongo.ErrNoDocuments {
-		return nil, status.Error(codes.NotFound, "User not found")
+		return nil, nil
 	} else if err != nil {
 		logger.Debug(err.Error() + " at getting user by name")
 		return
@@ -136,26 +135,4 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 
 	ub.logger.Debugf("Found user name %s", u.Name)
 	return
-}
-
-//GetUserAuthSalt returns the salt for the client
-func (ub *UserDB) GetUserAuthSalt(username string) (salt []byte, err error) {
-	user, getuserErr := ub.GetUserByName(username)
-	if getuserErr != nil {
-		return nil, getuserErr
-	}
-
-	return user.Salt(), nil
-
-}
-
-//GetUserAuthCred will returns the hashed credential for authentication
-func (ub *UserDB) GetUserAuthCred(username string) (token []byte, err error) {
-	user, getuserErr := ub.GetUserByName(username)
-
-	if getuserErr != nil {
-		return nil, getuserErr
-	}
-
-	return user.Pass(), nil
 }
