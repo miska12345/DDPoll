@@ -51,7 +51,6 @@ func createUser(client pb.DDPollClient) {
 		Action:     pb.UserAction_Registeration,
 		Parameters: []string{"fuckj", "fff"},
 	})
-
 	if err != nil {
 		fmt.Println(err.Error())
 	}

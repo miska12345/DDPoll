@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/OneOfOne/xxhash"
@@ -32,6 +33,20 @@ type server struct {
 	usersDB       *db.UserDB
 	maxConnection int
 	authSalt      []byte
+	pollgroups    pollRooms
+}
+
+type pollRooms struct {
+	rooms map[string]pollgroup
+	sync.Mutex
+}
+
+type pollgroup struct {
+	creator     string
+	numEnrolled uint32
+	currentPoll *pb.Poll
+	waiter      *sync.Cond
+	sync.Mutex
 }
 
 // Run starts running the server
