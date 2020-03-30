@@ -46,12 +46,16 @@ func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 //@Retrun the unique user id
 //@Return error if there is any
 func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
+	h := sha1.New()
 
+	var salt []byte = ub.genRandomBytes(64)
 	var collection *mongo.Collection = ub.publicCollection
 	var uid string = ub.GenerateUID(username, time.Now().String())
-	var passbytes []byte = []byte(password)
-	var salt []byte = ub.genRandomBytes(64)
-	// var existinguser = new(polluser.User)
+	var passhashed []byte
+
+	h.Write([]byte(password))
+	h.Write(salt)
+	passhashed = h.Sum(nil)
 
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
@@ -63,10 +67,10 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	replace := bson.M{
 		"$setOnInsert": bson.M{
 			"_id":       uid,
-			"name":      username,
-			"pass":      passbytes,
+			"Name":      username,
+			"Pass":      passhashed,
 			"salt":      salt,
-			"pollGroup": []bson.D{},
+			"pollGroup": bson.D{},
 		},
 	}
 
@@ -162,24 +166,13 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 	return
 }
 
-//GetUserAuthSalt returns the salt for the client
-func (ub *UserDB) GetUserAuthSalt(username string) (salt []byte, err error) {
+//GetUserAuthSaltAndCred returns the salt for the client
+func (ub *UserDB) GetUserAuthSaltAndCred(username string) (salt []byte, token []byte, err error) {
 	user, getuserErr := ub.GetUserByName(username)
 	if getuserErr != nil {
-		return nil, getuserErr
+		return nil, nil, getuserErr
 	}
 
-	return user.Salt(), nil
+	return user.Salt, user.Pass, nil
 
-}
-
-//GetUserAuthCred will returns the hashed credential for authentication
-func (ub *UserDB) GetUserAuthCred(username string) (token []byte, err error) {
-	user, getuserErr := ub.GetUserByName(username)
-
-	if getuserErr != nil {
-		return nil, getuserErr
-	}
-	ub.logger.Debug(string(user.Pass()))
-	return user.Pass(), nil
 }

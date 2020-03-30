@@ -8,14 +8,5 @@ type User struct {
 	Name       string
 	pass       []byte
 	salt       []byte
-	pollGroup  map[string]uint32
 	CreateTime time.Time
-}
-
-func (u *User) Salt() []byte {
-	return u.salt
-}
-
-func (u *User) Pass() []byte {
-	return u.pass
 }

@@ -119,5 +119,5 @@ func main() {
 	authenticate(client, "admin", "666")
 	//createPoll(client)
 	//createUser(client)
-	testAuth(client, 1)
+	testAuth(client, 100)
 }
