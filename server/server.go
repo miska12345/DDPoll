@@ -153,7 +153,7 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	// TODO: Do username format check(i.e. not empty, contains no special character etc)
 
 	// Call our internal authentication routine
-	_, err = s.authenticate(username, password)
+	err = s.authenticate(username, password)
 	if err != nil {
 		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error())
 		return
