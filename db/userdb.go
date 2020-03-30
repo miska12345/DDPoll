@@ -66,10 +66,11 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	//if there is none, insert one in the following format
 	replace := bson.M{
 		"$setOnInsert": bson.M{
-			"_id":  uid,
-			"Name": username,
-			"Pass": passhashed,
-			"salt": salt,
+			"_id":       uid,
+			"Name":      username,
+			"Pass":      passhashed,
+			"salt":      salt,
+			"pollGroup": bson.D{},
 		},
 	}
 
@@ -110,14 +111,44 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 
 // UpdateUserPolls will record a new poll in user's history
 func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (err error) {
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
+
+	_, err = ub.publicCollection.UpdateOne(ctx, bson.M{
+		"name": username,
+	}, bson.M{
+		"$push": bson.M{"pollGroup": bson.M{pid: groupID}},
+	})
+	return
+}
+
+func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []string, err error) {
 	// ctx, cancel := ub.db.QueryContext()
 	// defer cancel()
 
-	// ub.publicCollection.UpdateOne(ctx, bson.M{
+	// var resb struct {
+	// 	PollGroup []string
+	// }
+	// opts := options.FindOne()
+	// opts.SetProjection(bson.M{
+	// 	"pollGroup.pollID": 1,
+	// })
+
+	// ub.publicCollection.FindOne(ctx, bson.M{
 	// 	"name": username,
+<<<<<<< HEAD
 	// }, bson.M{})
 	// return
 	panic("Not implemented")
+=======
+	// 	"pollGroup": bson.M{
+	// 		"$elemMatch": bson.M{
+	// 			"groupID": groupID,
+	// 		},
+	// 	},
+	// }, opts).Decode()
+	return
+>>>>>>> 5b445d098ea04305d6f0555b96a533a1469555f6
 }
 
 //GetUserByName will return the user with the name specifield
