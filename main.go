@@ -48,6 +48,10 @@ func createUser(client pb.DDPollClient) {
 	defer cancel()
 
 	_, err := client.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: "admin",
+			Token:    authToken,
+		},
 		Action:     pb.UserAction_Registeration,
 		Parameters: []string{"fuckj", "fff"},
 	})
@@ -56,6 +60,10 @@ func createUser(client pb.DDPollClient) {
 	}
 
 	_, err2 := client.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: "admin",
+			Token:    authToken,
+		},
 		Action:     pb.UserAction_Registeration,
 		Parameters: []string{"fuckj", "fff"},
 	})

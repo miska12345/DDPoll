@@ -153,8 +153,6 @@ func (s *server) authenticate(username, password string) (err error) {
 		return nil
 	}
 
-	
-	
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
@@ -196,8 +194,7 @@ func (s *server) verifyAuthToken(token uint64, username string) bool {
 // DoAction takes UserAction request and distribute into sub-routines for processing
 func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.ActionSummary, err error) {
 	as = &pb.ActionSummary{}
-	if action.GetAction() != pb.UserAction_Authenticate 
-		|| action.GetAction() != pb.UserAction_Registeration{
+	if action.GetAction() != pb.UserAction_Authenticate {
 		if !s.verifyAuthToken(action.GetHeader().GetToken(), action.GetHeader().GetUsername()) {
 			err = status.Error(codes.Unauthenticated, "Token is invalid")
 			return
