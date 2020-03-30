@@ -7,10 +7,6 @@ service DDPoll {
     rpc DoAction(UserAction) returns (ActionSummary) {}
 }
 
-enum Status {
-    OK = 0;
-    Error = 1;
-}
 
 message PollStreamConfig {
     enum RankBy {
@@ -64,6 +60,9 @@ message UserAction {
         Reveal = 4;
         Create = 5;
         Registeration = 6;
+        GroupPolls = 7;
+        StartGroupPoll = 8;
+        StopGroupPoll = 9;
     }
     Action action = 3;
     repeated string parameters = 4; // Array of parameters
