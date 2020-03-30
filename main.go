@@ -74,6 +74,23 @@ func createUser(client pb.DDPollClient) {
 
 }
 
+// func testAuth(n int, client *pb.DDPollClient) {
+
+// 	ctx, cancel = context.WithTimeout(context.Background(), 10 *time.Second)
+// 	defer cancel()
+
+// 	for i := 0; i < n; i++ {
+// 		_, err := client.DoAction(ctx, &pb.UserAction{
+// 			Action:     pb.UserAction_Registeration,
+// 			Parameters: []string{string(i), "fff"},
+// 		})
+
+// 		if err != nil {
+// 			fmt.Println(err.Error())
+// 		}
+// 	}
+// }
+
 func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())

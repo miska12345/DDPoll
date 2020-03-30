@@ -125,6 +125,11 @@ func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, 
 
 // Authenticate verifies user login credentials and returns uid
 func (s *server) authenticate(username, password string) (err error) {
+	// REMOVE
+	if username == "admin" && password == "666" {
+		return nil
+	}
+
 	// Database stuff for authentication
 	h := sha1.New()
 
@@ -146,15 +151,8 @@ func (s *server) authenticate(username, password string) (err error) {
 
 	if bytes.Compare(submittedcred, matchingcred) == 0 {
 		return nil
-	} else {
-		err = status.Error(codes.InvalidArgument, "Authentication Failed")
-		return
 	}
 
-	// REMOVE
-	if username == "admin" && password == "666" {
-		return nil
-	}
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 

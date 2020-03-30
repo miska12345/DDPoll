@@ -34,5 +34,4 @@ func TestConcurrentCreateUser(t *testing.T) {
 	a("didntpayyy", string(14), &wg)
 	a("didntpay4", string(14), &wg)
 	wg.Wait()
-
-// }
+}
