@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
@@ -144,10 +145,15 @@ func (s *server) authenticate(username, password string) (err error) {
 	h.Write([]byte(password))
 	h.Write(authsalt)
 	submittedcred = h.Sum(nil)
-	if matchingcred, err = s.usersDB.GetUserAuthCred(username); err != nil {
+
+	matchingcred, err = s.usersDB.GetUserAuthCred(username)
+	if err != nil {
 		//get user auth credential failed in userdb
 		return
 	}
+
+	logger.Debug(hex.EncodeToString(submittedcred))
+	logger.Debug(hex.EncodeToString(matchingcred))
 
 	if bytes.Compare(submittedcred, matchingcred) == 0 {
 		return nil

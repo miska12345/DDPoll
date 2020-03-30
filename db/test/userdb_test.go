@@ -26,7 +26,7 @@ func TestConcurrentCreateUser(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(6)
 	for i := 0; i < 4; i++ {
 		a("didntpay4", string(i), &wg)
 

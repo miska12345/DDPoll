@@ -78,19 +78,19 @@ func testAuth(client pb.DDPollClient, n int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	for i := 0; i < n; i++ {
-		_, err := client.DoAction(ctx, &pb.UserAction{
-			Header: &pb.UserAction_Header{
-				Username: "admin",
-				Token:    authToken,
-			},
-			Action:     pb.UserAction_Registeration,
-			Parameters: []string{string(97 + i), "fff"},
-		})
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}
+	// for i := 0; i < n; i++ {
+	// 	_, err := client.DoAction(ctx, &pb.UserAction{
+	// 		Header: &pb.UserAction_Header{
+	// 			Username: "admin",
+	// 			Token:    authToken,
+	// 		},
+	// 		Action:     pb.UserAction_Registeration,
+	// 		Parameters: []string{string(97 + i), "fff"},
+	// 	})
+	// 	if err != nil {
+	// 		fmt.Println(err.Error())
+	// 	}
+	// }
 
 	for i := 0; i < n; i++ {
 		_, err := client.DoAction(ctx, &pb.UserAction{
@@ -119,5 +119,5 @@ func main() {
 	authenticate(client, "admin", "666")
 	//createPoll(client)
 	//createUser(client)
-	//testAuth(client, 1)
+	testAuth(client, 1)
 }

@@ -155,6 +155,6 @@ func (ub *UserDB) GetUserAuthCred(username string) (token []byte, err error) {
 	if getuserErr != nil {
 		return nil, getuserErr
 	}
-
+	ub.logger.Debug(string(user.Pass()))
 	return user.Pass(), nil
 }
