@@ -127,7 +127,7 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 	err = collection.FindOne(ctx, bson.M{"name": name}).Decode(u)
 
 	if err == mongo.ErrNoDocuments {
-		return nil, nil
+		return nil, status.Error(codes.NotFound, "User not found")
 	} else if err != nil {
 		logger.Debug(err.Error() + " at getting user by name")
 		return
@@ -135,4 +135,26 @@ func (ub *UserDB) GetUserByName(name string) (u *polluser.User, err error) {
 
 	ub.logger.Debugf("Found user name %s", u.Name)
 	return
+}
+
+//GetUserAuthSalt returns the salt for the client
+func (ub *UserDB) GetUserAuthSalt(username string) (salt []byte, err error) {
+	user, getuserErr := ub.GetUserByName(username)
+	if getuserErr != nil {
+		return nil, getuserErr
+	}
+
+	return user.Salt(), nil
+
+}
+
+//GetUserAuthCred will returns the hashed credential for authentication
+func (ub *UserDB) GetUserAuthCred(username string) (token []byte, err error) {
+	user, getuserErr := ub.GetUserByName(username)
+
+	if getuserErr != nil {
+		return nil, getuserErr
+	}
+
+	return user.Pass(), nil
 }
