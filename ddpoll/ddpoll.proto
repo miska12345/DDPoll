@@ -10,6 +10,7 @@ service DDPoll {
 
 message JoinPollQuery {
     string phrase = 1;
+    string displayName = 2;
 }
 
 message PollStreamConfig {

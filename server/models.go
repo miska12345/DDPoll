@@ -17,3 +17,7 @@ const uParamsPassword = 1
 const uParamsPollID = 0
 
 const uParamsVotes = 1
+
+const uParamsGroupID = 1
+
+const lenPassPhrase = 4

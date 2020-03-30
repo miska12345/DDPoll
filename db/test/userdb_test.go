@@ -45,6 +45,7 @@ func TestUpdateUserPoll(t *testing.T) {
 	_, err = userDB.CreateNewUser("didntpay", "password")
 	assert.Nil(t, err)
 	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "a", 1))
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "b", 1))
 	res, err := userDB.GetUserPollsByGroup("didntpay", 1)
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"a"}, res)

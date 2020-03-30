@@ -63,6 +63,9 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	//look for any document that applys
 	filter := bson.M{"name": username}
 
+	c := make(map[uint32][]string)
+	c[123] = []string{"abc", "def"}
+	c[321] = []string{"abc", "def"}
 	//if there is none, insert one in the following format
 	replace := bson.M{
 		"$setOnInsert": bson.M{
@@ -70,7 +73,7 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 			"Name":      username,
 			"Pass":      passhashed,
 			"salt":      salt,
-			"pollGroup": bson.D{},
+			"pollGroup": c,
 		},
 	}
 
