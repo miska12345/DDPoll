@@ -11,6 +11,22 @@ import (
 
 var authToken uint64
 
+func establishStream(client pb.DDPollClient) {
+	ctx := context.Background()
+	config := new(pb.PollStreamConfig)
+	config.RankBy = pb.PollStreamConfig_Time
+	as, _ := client.EstablishPollStream(ctx, config)
+	defer as.CloseSend()
+	for {
+		p, err := as.Recv()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(p)
+		}
+	}
+}
+
 func authenticate(client pb.DDPollClient, username, password string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

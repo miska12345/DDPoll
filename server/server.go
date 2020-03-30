@@ -237,24 +237,15 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 // EstablishPollStream takes polls config and stream polls to the user
 func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPoll_EstablishPollStreamServer) error {
 	// stream.Context() to get context
-	db, errConnect := connectToPollsDB(
-		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
-		"admin",
-		"wassup",
-		"DDPoll",
-		"Polls",
-	)
-	if errConnect != nil {
-		logger.Errorf("%s", errConnect)
-		return errConnect
-	}
+
 	for {
-		ch, errGetPolls := db.GetNewestPolls(10)
+		ch, errGetPolls := s.pollsDB.GetNewestPolls(10)
 		if errGetPolls != nil {
-			logger.Errorf("%s", errGetPolls)
+			logger.Errorf("[GetPolls] %s", errGetPolls)
 			return errGetPolls
 		}
-		for serverP, ok := <-ch; ok != false; {
+		serverP, ok := <-ch
+		for ok {
 			clientP := new(ddpoll.Poll)
 			clientP.Body = serverP.Content
 			clientP.Category = serverP.Category
@@ -265,9 +256,10 @@ func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPo
 			clientP.Stars = serverP.Stars
 			clientP.Tags = serverP.Tags
 			if errSend := stream.Send(clientP); errSend != nil {
-				logger.Errorf("%s", errSend)
+				logger.Errorf("[SendPolls] %s", errSend)
 				return errSend
 			}
+			serverP, ok = <-ch
 		}
 	}
 }
@@ -307,13 +299,6 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 /*********************************************************************************************************************************************************/
 
 func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	db, err := connectToPollsDB(
-		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
-		"admin",
-		"wassup",
-		"DDPoll",
-		"Polls",
-	)
 	if len(params) < 2 {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
@@ -328,7 +313,7 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 			return nil, err
 		}
 	}
-	err = db.UpdateNumVoted(pid, votes)
+	err = s.pollsDB.UpdateNumVoted(pid, votes)
 	return nil, err
 }
 
