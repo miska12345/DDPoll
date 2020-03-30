@@ -136,11 +136,6 @@ func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []st
 
 	// ub.publicCollection.FindOne(ctx, bson.M{
 	// 	"name": username,
-<<<<<<< HEAD
-	// }, bson.M{})
-	// return
-	panic("Not implemented")
-=======
 	// 	"pollGroup": bson.M{
 	// 		"$elemMatch": bson.M{
 	// 			"groupID": groupID,
@@ -148,7 +143,6 @@ func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []st
 	// 	},
 	// }, opts).Decode()
 	return
->>>>>>> 5b445d098ea04305d6f0555b96a533a1469555f6
 }
 
 //GetUserByName will return the user with the name specifield
