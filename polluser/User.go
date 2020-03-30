@@ -11,3 +11,11 @@ type User struct {
 
 	CreateTime time.Time
 }
+
+func (u *User) Salt() []byte {
+	return u.salt
+}
+
+func (u *User) Pass() []byte {
+	return u.pass
+}

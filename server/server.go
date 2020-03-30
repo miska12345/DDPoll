@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha1"
 	"fmt"
 	"io"
 	"net"
@@ -106,15 +107,39 @@ func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, 
 	return dbConn.ToUserDB(database, collectionName, ""), nil
 }
 
-// Authenticate verifies user login credentials
-func (s *server) authenticate(username, password string) (string, error) {
+// Authenticate verifies user login credentials and returns uid
+func (s *server) authenticate(username, password string) (err error) {
 	// Database stuff for authentication
+	h := sha1.New()
+
+	var submittedcred []byte
+	var matchingcred []byte
+
+	authsalt, getErr := s.usersDB.GetUserAuthSalt(username)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+	h.Write([]byte(password))
+	h.Write(authsalt)
+	submittedcred = h.Sum(nil)
+	if matchingcred, err = s.usersDB.GetUserAuthCred(username); err != nil {
+		//get user auth credential failed in userdb
+		return
+	}
+
+	if bytes.Compare(submittedcred, matchingcred) == 0 {
+		return nil
+	} else {
+		err = status.Error(codes.InvalidArgument, "Authentication Failed")
+		return
+	}
 
 	// REMOVE
 	if username == "admin" && password == "666" {
-		return "fakeuid", nil
+		return nil
 	}
-	return "", status.Error(codes.InvalidArgument, "Authentication Failed")
+	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
 // DoAuthenticate check the provided params and authenticate the user
