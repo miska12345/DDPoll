@@ -3,7 +3,7 @@ package db
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -13,6 +13,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UserDB represent an instance of users' database
@@ -24,7 +25,7 @@ type UserDB struct {
 	db                *DB
 }
 
-var ErrUserNameTaken = errors.New("User name already taken")
+//var ErrUserNameTaken = errors.New("User name already taken")
 
 //GenerateUID is a method that generates a unique user id for the userDB
 func (ub *UserDB) GenerateUID(args ...string) string {
@@ -46,59 +47,41 @@ func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 //@Return error if there is any
 func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 
-	var collection *mongo.Collection
-	var uid string
-	var passbytes []byte
-	var salt []byte
+	var collection *mongo.Collection = ub.publicCollection
+	var uid string = ub.GenerateUID(username, time.Now().String())
+	var passbytes []byte = []byte(password)
+	var salt []byte = ub.genRandomBytes(64)
+	// var existinguser = new(polluser.User)
 
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
-	session, err := ub.db.Client.StartSession()
-	if err != nil {
-		return "", err
-	}
+	//look for any document that applys
+	filter := bson.M{"name": username}
 
-	if err = session.StartTransaction(); err != nil {
-		return "", err
-	}
-
-	if err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
-		_, getErr := ub.GetUserByName(username)
-
-		if getErr == ErrUserNameTaken {
-			return status.Error(codes.InvalidArgument, getErr.Error())
-		} else if getErr != nil {
-			sc.AbortTransaction(sc)
-			return status.Error(codes.Internal, getErr.Error())
-		}
-		collection = ub.publicCollection
-		uid = ub.GenerateUID(username, time.Now().String())
-		passbytes = []byte(password)
-		salt = ub.genRandomBytes(64)
-
-		_, err := collection.InsertOne(ctx, bson.M{
+	//if there is none, insert one in the following format
+	replace := bson.M{
+		"$setOnInsert": bson.M{
 			"_id":  uid,
 			"name": username,
 			"pass": passbytes,
 			"salt": salt,
-		})
-
-		if err != nil {
-			sc.AbortTransaction(sc)
-			return err
-		}
-
-		if err = session.CommitTransaction(sc); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return "", status.Error(codes.Unknown, err.Error())
+		},
 	}
 
-	return uid, nil
+	err := collection.FindOneAndUpdate(ctx, filter, replace, options.FindOneAndUpdate().SetUpsert(true))
+
+	if err.Err() == mongo.ErrNoDocuments {
+		//There is no user with this name
+		logger.Debug("Created user " + username)
+		return uid, nil
+	} else if err.Err() != nil {
+		//There is user with this name and something went wrong
+		return "", err.Err()
+	} else {
+		//There is user with this name, tell client to pick another one
+		return "", status.Error(codes.AlreadyExists, fmt.Sprintf("User with name %s already exist", username))
+	}
 }
 
 //GetUserByID will return the user with the id specifield
@@ -119,6 +102,11 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 	ub.logger.Debugf("Found user id %s", u.UID)
 	return
 
+}
+
+// UpdateUserPolls will record a new poll in user's history
+func (ub *UserDB) UpdateUserPolls(pid string) (err error){
+	panic("Not implemented")
 }
 
 //GetUserByName will return the user with the name specifield

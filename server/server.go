@@ -171,6 +171,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 		as, err = s.doVoteMultiple(ctx, action.GetParameters())
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
+		//TODO: print action summary
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -183,12 +184,14 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 	if len(params) < 2 {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
-	as = &pb.ActionSummary{}
+	as = &pb.ActionSummary{Info: []byte("unusuall exit")}
 
 	username := params[uParamsUsername]
 	password := params[uParamsPassword]
 
-	if _, err = s.usersDB.CreateNewUser(username, password); err != nil {
+	if _, errcreate := s.usersDB.CreateNewUser(username, password); errcreate != nil {
+		err = errcreate
+		logger.Debug(err.Error())
 		return
 	}
 
