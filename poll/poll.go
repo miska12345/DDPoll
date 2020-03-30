@@ -22,19 +22,20 @@ const CreateParamLength = MinOptions + RequiredPollElements
 
 // Definition server poll struct
 type Poll struct {
-	PID        string `json:"_id,omitempty" bson:"_id,omitempty"`
-	Owner      string
-	Public     bool // Private - False | Public - True
-	Title      string
-	Content    string
-	Category   string
-	Choices    []string // Description of each choices in the poill
-	Tags       []string
-	Votes      []uint64 // Vote counts, connected to choices by indices
-	Stars      uint64
-	NumVoted   uint64
-	NumViewed  uint64
-	NumStarred uint64
-	CreateTime time.Time
-	EndTime    time.Time
+	PID         string `json:"_id,omitempty" bson:"_id,omitempty"`
+	Owner       string
+	Public      bool // Private - False | Public - True
+	Title       string
+	Content     string
+	Category    string
+	Choices     []string // Description of each choices in the poill
+	Tags        []string
+	Votes       []uint64 // Vote counts, connected to choices by indices
+	Stars       uint64
+	NumVoted    uint64
+	NumViewed   uint64
+	NumStarred  uint64
+	CreateTime  time.Time
+	EndTime     time.Time
+	DisplayType uint64
 }

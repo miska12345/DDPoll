@@ -5,11 +5,11 @@ service DDPoll {
     rpc EstablishPollStream(PollStreamConfig) returns (stream Poll) {}
     rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
     rpc DoAction(UserAction) returns (ActionSummary) {}
+    rpc JoinPollGroup(JoinPollQuery) returns (stream Poll) {}
 }
 
-enum Status {
-    OK = 0;
-    Error = 1;
+message JoinPollQuery {
+    string phrase = 1;
 }
 
 message PollStreamConfig {
@@ -64,6 +64,9 @@ message UserAction {
         Reveal = 4;
         Create = 5;
         Registeration = 6;
+        GroupPolls = 7;
+        StartGroupPoll = 8;
+        StopGroupPoll = 9;
     }
     Action action = 3;
     repeated string parameters = 4; // Array of parameters

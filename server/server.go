@@ -14,6 +14,7 @@ import (
 
 	"github.com/OneOfOne/xxhash"
 	"github.com/miska12345/DDPoll/db"
+	"github.com/miska12345/DDPoll/ddpoll"
 	pb "github.com/miska12345/DDPoll/ddpoll"
 	"github.com/miska12345/DDPoll/poll"
 	goLogger "github.com/phachon/go-logger"
@@ -227,7 +228,39 @@ func (s *server) doRegistration(ctx context.Context, params []string) (as *pb.Ac
 // EstablishPollStream takes polls config and stream polls to the user
 func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPoll_EstablishPollStreamServer) error {
 	// stream.Context() to get context
-	panic("not implemented")
+	db, errConnect := connectToPollsDB(
+		"mongodb+srv://admin:wassup@cluster0-n0w7a.mongodb.net/test?retryWrites=true&w=majority",
+		"admin",
+		"wassup",
+		"DDPoll",
+		"Polls",
+	)
+	if errConnect != nil {
+		logger.Errorf("%s", errConnect)
+		return errConnect
+	}
+	for {
+		ch, errGetPolls := db.GetNewestPolls(10)
+		if errGetPolls != nil {
+			logger.Errorf("%s", errGetPolls)
+			return errGetPolls
+		}
+		for serverP, ok := <-ch; ok != false; {
+			clientP := new(ddpoll.Poll)
+			clientP.Body = serverP.Content
+			clientP.Category = serverP.Category
+			clientP.Id, _ = strconv.ParseUint(serverP.PID, 10, 64)
+			clientP.DisplayType = pb.Poll_OnReveal
+			clientP.Options = serverP.Choices
+			clientP.Owner = serverP.Owner
+			clientP.Stars = serverP.Stars
+			clientP.Tags = serverP.Tags
+			if errSend := stream.Send(clientP); errSend != nil {
+				logger.Errorf("%s", errSend)
+				return errSend
+			}
+		}
+	}
 }
 
 // FindPollByKeyWord takes a set of search criterias and return a collection of Polls
@@ -288,4 +321,18 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 	}
 	err = db.UpdateNumVoted(pid, votes)
 	return nil, err
+}
+
+/*********************************************************************************************************************************************************/
+
+func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
+}
+
+func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
+}
+
+func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
 }
