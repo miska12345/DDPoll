@@ -19,6 +19,8 @@ const uParamsPollID = 0
 
 const uParamsVotes = 1
 
+const uParamsGroupID = 0
+
 // CONSTANTS
 const GET_POLL_NUM = 10
 
