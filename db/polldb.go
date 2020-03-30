@@ -118,9 +118,7 @@ func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error
 
 // GetNewestPolls return at most 'count' number of polls, sorted by create time
 func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
-	ctx, cancel := pb.db.QueryContext()
-	defer cancel()
-
+	ctx := context.Background()
 	findOption := options.Find()
 	findOption.SetSort(bson.M{
 		"createTime": -1,
