@@ -1,7 +1,7 @@
 package svtest
 
 import (
-	"testing"
+	"github.com/miska12345/DDPoll/server"
 	"google.golang.org/grpc"
 )
 
@@ -11,13 +11,10 @@ const dbPollName = "Polls"
 const dbUserName = "Users"
 const testPort = "8080"
 
-func initializeTestEnv() *grpc.Server, error {
+func initializeTestEnv() (*grpc.Server, error) {
 	g, err := server.Run(testPort, 100, dbLinkPoll, dbPollName, dbLinkUser, dbUserName)
 	if err != nil {
 		return nil, err
 	}
 	return g, nil
 }
-
-
-

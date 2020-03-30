@@ -335,21 +335,10 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 /*********************************************************************************************************************************************************/
 
 func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	// as = &pb.ActionSummary{}
-	// for _, v := range params {
-	// 	p, err := s.pollsDB.GetPollByPID(v)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 		return
-	// 	}
-	// 	if p.Owner != params[uParamsUsername] {
-	// 		return &pb.ActionSummary{}, status.Error(codes.NotFound, fmt.Sprintf("poll ID %d does not own %s", params[uParamsUsername]))
-	// 	}
-	// 	err = s.usersDB.UpdateUserPolls(v)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// }
+	as = &pb.ActionSummary{}
+	for _, v := range params {
+		_, _ = s.pollsDB.GetPollByPID(v)
+	}
 	return nil, nil
 }
 
