@@ -26,7 +26,7 @@ func TestConcurrentCreateUser(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(6)
 	for i := 0; i < 4; i++ {
 		a("didntpay4", string(i), &wg)
 
@@ -34,5 +34,18 @@ func TestConcurrentCreateUser(t *testing.T) {
 	a("didntpayyy", string(14), &wg)
 	a("didntpay4", string(14), &wg)
 	wg.Wait()
+}
 
+func TestUpdateUserPoll(t *testing.T) {
+	db, err := initializeTestEnv(collectionname)
+	defer db.Disconnect()
+
+	assert.Nil(t, err)
+	userDB := db.ToUserDB(Database, collectionname, "")
+	_, err = userDB.CreateNewUser("didntpay", "password")
+	assert.Nil(t, err)
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "a", 1))
+	res, err := userDB.GetUserPollsByGroup("didntpay", 1)
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"a"}, res)
 }

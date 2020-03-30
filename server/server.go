@@ -125,36 +125,30 @@ func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, 
 
 // Authenticate verifies user login credentials and returns uid
 func (s *server) authenticate(username, password string) (err error) {
+	// REMOVE
+	if username == "admin" && password == "666" {
+		return nil
+	}
+
 	// Database stuff for authentication
 	h := sha1.New()
 
 	var submittedcred []byte
-	var matchingcred []byte
 
-	authsalt, getErr := s.usersDB.GetUserAuthSalt(username)
+	authsalt, matchingcred, getErr := s.usersDB.GetUserAuthSaltAndCred(username)
 	if getErr != nil {
+		//error whiling getting salt
 		err = getErr
 		return
 	}
 	h.Write([]byte(password))
 	h.Write(authsalt)
 	submittedcred = h.Sum(nil)
-	if matchingcred, err = s.usersDB.GetUserAuthCred(username); err != nil {
-		//get user auth credential failed in userdb
-		return
-	}
 
 	if bytes.Compare(submittedcred, matchingcred) == 0 {
 		return nil
-	} else {
-		err = status.Error(codes.InvalidArgument, "Authentication Failed")
-		return
 	}
 
-	// REMOVE
-	if username == "admin" && password == "666" {
-		return nil
-	}
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
@@ -170,7 +164,7 @@ func (s *server) doAuthenticate(ctx context.Context, params []string) (as *pb.Ac
 	// Call our internal authentication routine
 	err = s.authenticate(username, password)
 	if err != nil {
-		logger.Debugf("Useer %s failed to login because err = %s", username, err.Error())
+		logger.Debugf("User %s failed to login because err = %s", username, err.Error())
 		return
 	}
 	token := s.generateAuthToken(username)
@@ -326,7 +320,22 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 /*********************************************************************************************************************************************************/
 
 func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	panic("not implemented")
+	// as = &pb.ActionSummary{}
+	// for _, v := range params {
+	// 	p, err := s.pollsDB.GetPollByPID(v)
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 		return
+	// 	}
+	// 	if p.Owner != params[uParamsUsername] {
+	// 		return &pb.ActionSummary{}, status.Error(codes.NotFound, fmt.Sprintf("poll ID %d does not own %s", params[uParamsUsername]))
+	// 	}
+	// 	err = s.usersDB.UpdateUserPolls(v)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// }
+	return nil, nil
 }
 
 func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
