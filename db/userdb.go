@@ -105,7 +105,7 @@ func (ub *UserDB) GetUserByID(uid string) (u *polluser.User, err error) {
 }
 
 // UpdateUserPolls will record a new poll in user's history
-func (ub *UserDB) UpdateUserPolls(pid string) (err error){
+func (ub *UserDB) UpdateUserPolls(pid string) (err error) {
 	panic("Not implemented")
 }
 
