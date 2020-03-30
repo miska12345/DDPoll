@@ -97,8 +97,8 @@ func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
 	s.usersDB = udb
 	s.maxConnection = maxConnection
 	s.authSalt = make([]byte, 128)
+
 	rand.Read(s.authSalt)
-	s.pollgroups.rooms = make(map[string]pollgroup)
 	return s
 }
 
@@ -323,34 +323,23 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 
 /*********************************************************************************************************************************************************/
 
-func (s *server) doGroupPolls(ctx context.Context, params []string) (*pb.ActionSummary, error) {
-	if len(params) < 2 {
-		return &pb.ActionSummary{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect >= 2 args but received %d", len(params)))
-	}
-	username := params[uParamsUsername]
-	groupID, err := strconv.ParseUint(params[uParamsGroupID], 10, 32)
-	if err != nil {
-		return &pb.ActionSummary{}, status.Error(codes.InvalidArgument, "Invalid groupID(not uint32)")
-	}
-	err = s.groupPollsByPID(username, uint32(groupID), params[2:]...)
-	return &pb.ActionSummary{}, err
-}
-
-func (s *server) groupPollsByPID(username string, groupID uint32, pid ...string) error {
-	for _, v := range pid {
-		p, err := s.pollsDB.GetPollByPID(v)
-		if err != nil {
-			return err
-		}
-		if p.Owner != username {
-			return status.Error(codes.InvalidArgument, fmt.Sprintf("Poll %s does not belong to you", v))
-		}
-		err = s.usersDB.UpdateUserPolls(username, v, uint32(groupID))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	// as = &pb.ActionSummary{}
+	// for _, v := range params {
+	// 	p, err := s.pollsDB.GetPollByPID(v)
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 		return
+	// 	}
+	// 	if p.Owner != params[uParamsUsername] {
+	// 		return &pb.ActionSummary{}, status.Error(codes.NotFound, fmt.Sprintf("poll ID %d does not own %s", params[uParamsUsername]))
+	// 	}
+	// 	err = s.usersDB.UpdateUserPolls(v)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// }
+	return nil, nil
 }
 
 func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
@@ -359,33 +348,15 @@ func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.
 	}
 	pg := new(pollgroup)
 	pg.creator = params[0]
+	sync.NewCond(pg.waiter.L)
 	// gids := params[1:]
 	return nil, nil
 }
 
-func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	panic("not implemented")
+func (s *server) EstablishClientStream(req *pb.PollStreamConfig, srv pb.DDPoll_EstablishClientStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method EstablishClientStream not implemented")
 }
 
-func (s *server) JoinPollGroup(q *pb.JoinPollQuery, stream pb.DDPoll_JoinPollGroupServer) error {
-	// User need to show a display name
-	if len(q.GetPhrase()) != lenPassPhrase {
-		return status.Error(codes.InvalidArgument, "Phrase length doesn't match")
-	}
-	// s.pollgroups.Lock()
-	// pg, ok := s.pollgroups.rooms[q.GetPhrase()]
-	// if !ok {
-	// 	s.pollgroups.Unlock()
-	// 	return status.Error(codes.InvalidArgument, "Phrase is invalid")
-	// }
-	// s.pollgroups.Unlock()
-
-	// // pg session
-	// pg.Lock()
-	// pg.numEnrolled++
-	// pg.Unlock()
-	// go func() {
-
-	// }()
-	return nil
+func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
 }
