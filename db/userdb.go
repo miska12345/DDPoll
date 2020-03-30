@@ -117,7 +117,7 @@ func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (
 	// 	"name": username,
 	// }, bson.M{})
 	// return
-	panic("")
+	panic("Not implemented")
 }
 
 //GetUserByName will return the user with the name specifield
