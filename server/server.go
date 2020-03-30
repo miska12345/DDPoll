@@ -297,3 +297,17 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 	err = db.UpdateNumVoted(pid, votes)
 	return nil, err
 }
+
+/*********************************************************************************************************************************************************/
+
+func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
+}
+
+func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
+}
+
+func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	panic("not implemented")
+}

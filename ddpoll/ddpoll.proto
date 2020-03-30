@@ -5,8 +5,12 @@ service DDPoll {
     rpc EstablishPollStream(PollStreamConfig) returns (stream Poll) {}
     rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
     rpc DoAction(UserAction) returns (ActionSummary) {}
+    rpc JoinPollGroup(JoinPollQuery) returns (stream Poll) {}
 }
 
+message JoinPollQuery {
+    string phrase = 1;
+}
 
 message PollStreamConfig {
     enum RankBy {
