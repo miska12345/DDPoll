@@ -48,10 +48,6 @@ func createUser(client pb.DDPollClient) {
 	defer cancel()
 
 	_, err := client.DoAction(ctx, &pb.UserAction{
-		Header: &pb.UserAction_Header{
-			Username: "admin",
-			Token:    authToken,
-		},
 		Action:     pb.UserAction_Registeration,
 		Parameters: []string{"fuckj", "fff"},
 	})
@@ -61,10 +57,6 @@ func createUser(client pb.DDPollClient) {
 	}
 
 	_, err2 := client.DoAction(ctx, &pb.UserAction{
-		Header: &pb.UserAction_Header{
-			Username: "admin",
-			Token:    authToken,
-		},
 		Action:     pb.UserAction_Registeration,
 		Parameters: []string{"fuckj", "fff"},
 	})
@@ -74,6 +66,23 @@ func createUser(client pb.DDPollClient) {
 	}
 
 }
+
+// func testAuth(n int, client *pb.DDPollClient) {
+
+// 	ctx, cancel = context.WithTimeout(context.Background(), 10 *time.Second)
+// 	defer cancel()
+
+// 	for i := 0; i < n; i++ {
+// 		_, err := client.DoAction(ctx, &pb.UserAction{
+// 			Action:     pb.UserAction_Registeration,
+// 			Parameters: []string{string(i), "fff"},
+// 		})
+
+// 		if err != nil {
+// 			fmt.Println(err.Error())
+// 		}
+// 	}
+// }
 
 func main() {
 	var opts []grpc.DialOption

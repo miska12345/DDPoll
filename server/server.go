@@ -110,6 +110,11 @@ func connectToUsersDB(URL, database, collectionName string) (dbPoll *db.UserDB, 
 
 // Authenticate verifies user login credentials and returns uid
 func (s *server) authenticate(username, password string) (err error) {
+	// REMOVE
+	if username == "admin" && password == "666" {
+		return nil
+	}
+
 	// Database stuff for authentication
 	h := sha1.New()
 
@@ -131,15 +136,10 @@ func (s *server) authenticate(username, password string) (err error) {
 
 	if bytes.Compare(submittedcred, matchingcred) == 0 {
 		return nil
-	} else {
-		err = status.Error(codes.InvalidArgument, "Authentication Failed")
-		return
 	}
 
-	// REMOVE
-	if username == "admin" && password == "666" {
-		return nil
-	}
+	
+	
 	return status.Error(codes.InvalidArgument, "Authentication Failed")
 }
 
@@ -181,7 +181,8 @@ func (s *server) verifyAuthToken(token uint64, username string) bool {
 // DoAction takes UserAction request and distribute into sub-routines for processing
 func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.ActionSummary, err error) {
 	as = &pb.ActionSummary{}
-	if action.GetAction() != pb.UserAction_Authenticate {
+	if action.GetAction() != pb.UserAction_Authenticate 
+		|| action.GetAction() != pb.UserAction_Registeration{
 		if !s.verifyAuthToken(action.GetHeader().GetToken(), action.GetHeader().GetUsername()) {
 			err = status.Error(codes.Unauthenticated, "Token is invalid")
 			return
