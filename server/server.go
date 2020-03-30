@@ -43,8 +43,10 @@ type pollRooms struct {
 
 type pollgroup struct {
 	creator     string
+	members     []string
 	numEnrolled uint32
 	currentPoll *pb.Poll
+	nextPoll    chan bool
 	waiter      *sync.Cond
 	sync.Mutex
 }
@@ -206,6 +208,8 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	case pb.UserAction_Registeration:
 		as, err = s.doRegistration(ctx, action.GetParameters())
 		//TODO: print action summary
+	case pb.UserAction_StartGroupPoll:
+		as, err = s.doStartPollGroup(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -239,7 +243,7 @@ func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPo
 	// stream.Context() to get context
 
 	for {
-		ch, errGetPolls := s.pollsDB.GetNewestPolls(10)
+		ch, errGetPolls := s.pollsDB.GetNewestPolls(GET_POLL_NUM)
 		if errGetPolls != nil {
 			logger.Errorf("[GetPolls] %s", errGetPolls)
 			return errGetPolls
@@ -299,7 +303,7 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 /*********************************************************************************************************************************************************/
 
 func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	if len(params) < 2 {
+	if len(params) < VOTE_MUL_PARAM_NUM {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
 
@@ -350,7 +354,13 @@ func (s *server) groupPollsByPID(username string, groupID uint32, pid ...string)
 }
 
 func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	panic("not implemented")
+	if len(params) < START_PG_PARAM_NUM {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", START_PG_PARAM_NUM, len(params)))
+	}
+	pg := new(pollgroup)
+	pg.creator = params[0]
+	// gids := params[1:]
+	return nil, nil
 }
 
 func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {

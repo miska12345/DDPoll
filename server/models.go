@@ -1,5 +1,6 @@
 package server
 
+// Params
 const uArrayNumElements = 2
 
 const uParamsTopic = 1
@@ -18,6 +19,9 @@ const uParamsPollID = 0
 
 const uParamsVotes = 1
 
-const uParamsGroupID = 1
+// CONSTANTS
+const GET_POLL_NUM = 10
 
-const lenPassPhrase = 4
+const VOTE_MUL_PARAM_NUM = 2
+
+const START_PG_PARAM_NUM = 1
