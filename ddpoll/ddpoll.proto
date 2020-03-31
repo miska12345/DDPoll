@@ -6,7 +6,7 @@ service DDPoll {
     rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
     rpc DoAction(UserAction) returns (ActionSummary) {}
     rpc JoinPollGroup(JoinPollQuery) returns (stream Poll) {}
-    rpc EstablishClientStream(PollStreamConfig) returns (stream Next) {}
+    rpc EstablishClientStream(stream Next) returns (ActionSummary) {}
 }
 
 message Next {
@@ -18,6 +18,7 @@ message Next {
         terminateGroup = 5;
     }
     PollControl signal = 1;
+    string roomKey = 2;
 }
 
 message JoinPollQuery {
@@ -35,7 +36,7 @@ message PollStreamConfig {
 }
 
 message Poll {
-    uint64 id = 1;
+    string id = 1;
     string owner = 2;
     string category = 3;
     string body = 4;

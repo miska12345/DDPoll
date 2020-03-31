@@ -8,6 +8,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	random "math/rand"
 	"net"
 	"strconv"
 	"sync"
@@ -37,7 +38,7 @@ type server struct {
 }
 
 type pollRooms struct {
-	rooms map[string]pollgroup
+	rooms map[string]*pollgroup
 	sync.Mutex
 }
 
@@ -45,10 +46,11 @@ type pollgroup struct {
 	creator     string
 	members     []string
 	numEnrolled uint32
+	canVote     bool
+	gids        []uint32
 	currentPoll *pb.Poll
-	nextPoll    chan bool
 	waiter      *sync.Cond
-	sync.Mutex
+	*sync.Mutex
 }
 
 // Run starts running the server
@@ -209,7 +211,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 		as, err = s.doRegistration(ctx, action.GetParameters())
 		//TODO: print action summary
 	case pb.UserAction_StartGroupPoll:
-		as, err = s.doStartPollGroup(ctx, append([]string{action.Header.GetUsername()}, action.GetParameters()...))
+		as, err = s.doStartPollGroup(ctx, action.GetParameters())
 	default:
 		logger.Warningf("Unknown action type %s", action.GetAction().String())
 		err = status.Error(codes.NotFound, fmt.Sprintf("Unknown action [%s]", action.GetAction().String()))
@@ -253,7 +255,7 @@ func (s *server) EstablishPollStream(config *pb.PollStreamConfig, stream pb.DDPo
 			clientP := new(ddpoll.Poll)
 			clientP.Body = serverP.Content
 			clientP.Category = serverP.Category
-			clientP.Id, _ = strconv.ParseUint(serverP.PID, 10, 64)
+			clientP.Id = serverP.PID
 			clientP.DisplayType = pb.Poll_OnReveal
 			clientP.Options = serverP.Choices
 			clientP.Owner = serverP.Owner
@@ -346,15 +348,130 @@ func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.
 	if len(params) < START_PG_PARAM_NUM {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", START_PG_PARAM_NUM, len(params)))
 	}
+	// Randomized random generated integer
+	random.Seed(time.Now().UnixNano())
+	var roomKey string
 	pg := new(pollgroup)
-	pg.creator = params[0]
 	sync.NewCond(pg.waiter.L)
-	// gids := params[1:]
-	return nil, nil
+	for {
+		// Generate random string
+		var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+		b := make([]rune, 4)
+		for i := range b {
+			b[i] = letterRunes[random.Intn(len(letterRunes))]
+		}
+		roomKey := string(b)
+		// Assign roomKey to
+		if _, ok := s.pollgroups.rooms[roomKey]; !ok {
+			s.pollgroups.rooms[roomKey] = pg
+			break
+		}
+	}
+	pg.Lock()
+	// Initilize poll room
+	pg.creator = params[0]
+	strGids := params[1:]
+	for _, val := range strGids {
+		gid, _ := strconv.ParseInt(val, 10, 64)
+		pg.gids = append(pg.gids, uint32(gid))
+	}
+	pg.Unlock()
+	as.Info = []byte(roomKey)
+	return as, error(nil)
 }
 
-func (s *server) EstablishClientStream(req *pb.PollStreamConfig, srv pb.DDPoll_EstablishClientStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method EstablishClientStream not implemented")
+func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer) error {
+	nextCommand, err := srv.Recv()
+	roomKey := nextCommand.GetRoomKey()
+	pg := s.pollgroups.rooms[roomKey]
+	uid := pg.creator
+	sync.NewCond(pg.waiter.L)
+	var pids []string
+	for _, gid := range pg.gids {
+		tempPIDs, err := s.usersDB.GetUserPollsByGroup(uid, gid)
+		logger.Errorf("%s", err)
+		pids = append(pids, tempPIDs...)
+	}
+	if len(pids) == 0 {
+		logger.Errorf("PID not found")
+		return srv.SendAndClose(&pb.ActionSummary{})
+	}
+	// Index in poll array to determine next poll
+	idx := 0
+
+	// Helper method to convert DB poll to RPC poll
+	var DB2RPC = func(nextPoll *poll.Poll, currentPoll *pb.Poll) {
+		currentPoll.Body = nextPoll.Content
+		currentPoll.Category = nextPoll.Category
+		if nextPoll.DisplayType == 0 {
+			currentPoll.DisplayType = pb.Poll_OnVote
+		} else {
+			currentPoll.DisplayType = pb.Poll_OnReveal
+		}
+		currentPoll.Id = nextPoll.PID
+		currentPoll.Options = nextPoll.Choices
+		currentPoll.Stars = nextPoll.Stars
+		currentPoll.Tags = nextPoll.Tags
+	}
+
+	// Get DB poll
+	nextPoll, err := s.pollsDB.GetPollByPID(pids[idx])
+
+	// Convert DB poll to RPC poll
+	DB2RPC(nextPoll, pg.currentPoll)
+
+	for {
+		nextCommand, err := srv.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.Errorf("Receive Error: %s", err)
+			return err
+		}
+		// Block and wait for next command
+		switch nextCommand.GetSignal() {
+		case pb.Next_foward:
+			if idx < len(pids)-1 {
+				pg.Lock()
+				idx++
+				nextPoll, err := s.pollsDB.GetPollByPID(pids[idx])
+				if err != nil {
+					pg.Unlock()
+					logger.Errorf("Get PID Error: %s", err)
+					return err
+				}
+				// Convert DB poll to RPC poll
+				DB2RPC(nextPoll, pg.currentPoll)
+				pg.Unlock()
+			}
+		case pb.Next_backward:
+			if idx > 0 {
+				pg.Lock()
+				idx--
+				nextPoll, err := s.pollsDB.GetPollByPID(pids[idx])
+				if err != nil {
+					pg.Unlock()
+					logger.Errorf("Get PID Error: %s", err)
+					return err
+				}
+				// Convert DB poll to RPC poll
+				DB2RPC(nextPoll, pg.currentPoll)
+				pg.Unlock()
+			}
+		case pb.Next_start:
+			pg.Lock()
+			pg.canVote = true
+			pg.Unlock()
+		case pb.Next_stop:
+			pg.Lock()
+			pg.canVote = false
+			pg.Unlock()
+		case pb.Next_terminateGroup:
+			return srv.SendAndClose(&pb.ActionSummary{})
+		}
+	}
+	return err
 }
 
 func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
