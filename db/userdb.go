@@ -1,9 +1,12 @@
 package db
 
 import (
+	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -38,7 +41,7 @@ func (ub *UserDB) GenerateUID(args ...string) string {
 
 func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 	salt = make([]byte, size)
-	//TODO: generate random bytes and put into the array
+	rand.Read(salt)
 	return salt
 }
 
@@ -52,11 +55,14 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	var collection *mongo.Collection = ub.publicCollection
 	var uid string = ub.GenerateUID(username, time.Now().String())
 	var passhashed []byte
-
+	//var pollgroup map[uint32][]string = make(map[uint32][]string)
 	h.Write([]byte(password))
 	h.Write(salt)
 	passhashed = h.Sum(nil)
 
+	// temp := make([]string, 2, 3)
+	// temp[0] = "abc"
+	// pollgroup[123] = temp
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
@@ -67,8 +73,8 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	replace := bson.M{
 		"$setOnInsert": bson.M{
 			"_id":       uid,
-			"Name":      username,
-			"Pass":      passhashed,
+			"name":      username,
+			"pass":      passhashed,
 			"salt":      salt,
 			"pollGroup": bson.D{},
 		},
@@ -114,35 +120,79 @@ func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
-	_, err = ub.publicCollection.UpdateOne(ctx, bson.M{
-		"name": username,
-	}, bson.M{
-		"$push": bson.M{"pollGroup": bson.M{pid: groupID}},
-	})
+	strgroupID := strconv.Itoa(int(groupID))
+	//logger.Debug(strgroupID)
+	filter := bson.M{"name": username}
+
+	update := bson.M{
+		"$push": bson.M{
+			"pollGroup." + strgroupID: pid,
+		},
+	}
+
+	_, err = ub.publicCollection.UpdateOne(ctx, filter, update)
 	return
 }
 
+type Decode struct {
+	pollGroup string
+	keys      map[string][]int
+}
+
+//GetUserPollsByGroup will return the list of poll ids in the given group
 func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []string, err error) {
-	// ctx, cancel := ub.db.QueryContext()
-	// defer cancel()
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
 
-	// var resb struct {
-	// 	PollGroup []string
+	var document = bson.M{}
+	var ids []string = make([]string, 2)
+
+	filter := bson.M{
+		"name": username,
+	}
+
+	projection := bson.M{
+		"_id":  0,
+		"name": 0,
+		"pass": 0,
+		"salt": 0,
+	}
+
+	var doc = ub.publicCollection.FindOne(ctx, filter, options.FindOne().SetProjection(projection))
+
+	if err := doc.Decode(document); err != nil {
+		return nil, err
+	}
+
+	retrievedGrps := document["pollGroup"]
+
+	// //this is a map, return by bson.M['pollGroups']
+	s := reflect.ValueOf(retrievedGrps)
+
+	for _, key := range s.MapKeys() {
+		if key.String() == strconv.Itoa(int(groupID)) {
+			retrievedface := reflect.ValueOf(s.MapIndex(key).Interface())
+			//logger.Debug(strconv.Itoa(retrievedface.NumField()))
+			fmt.Println(retrievedface.Kind())
+			//logger.Debug(retrievedelem.Interface().(string))
+			for i := 0; i < retrievedface.Len(); i++ {
+				//ids[i] = retrievedface.Interface().(string)
+				ids[i] = retrievedface.Index(i).Interface().(string)
+
+			}
+		}
+	}
+
+	// for i := 0; i < s.Len(); i++ {
+	// 	ids[i] = s.Index(i).Interface().(string)
 	// }
-	// opts := options.FindOne()
-	// opts.SetProjection(bson.M{
-	// 	"pollGroup.pollID": 1,
-	// })
 
-	// ub.publicCollection.FindOne(ctx, bson.M{
-	// 	"name": username,
-	// 	"pollGroup": bson.M{
-	// 		"$elemMatch": bson.M{
-	// 			"groupID": groupID,
-	// 		},
-	// 	},
-	// }, opts).Decode()
-	return
+	// for _, id := range retrievedIDs {
+	// 	ids = append(ids, id.s)
+	// 	logger.Debug(id.(string))
+	// }
+
+	return ids, nil
 }
 
 //GetUserByName will return the user with the name specifield

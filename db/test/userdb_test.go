@@ -1,6 +1,7 @@
 package dbtest
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
@@ -44,8 +45,14 @@ func TestUpdateUserPoll(t *testing.T) {
 	userDB := db.ToUserDB(Database, collectionname, "")
 	_, err = userDB.CreateNewUser("didntpay", "password")
 	assert.Nil(t, err)
-	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "a", 1))
-	res, err := userDB.GetUserPollsByGroup("didntpay", 1)
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"a"}, res)
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "ASDSAAAA", 100))
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "DSAAAA", 100))
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "DSAAAA", 101))
+	res, err2 := userDB.GetUserPollsByGroup("didntpay", 101)
+	assert.Nil(t, err2)
+	fmt.Println(res)
+	assert.Nil(t, 1)
+	//res, err := userDB.GetUserPollsByGroup("didntpay", 1)
+	//assert.Nil(t, err)
+	//assert.Equal(t, []string{"a"}, res)
 }
