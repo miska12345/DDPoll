@@ -118,10 +118,37 @@ func (pb *PollDB) GetPollsByUser(username string) (ch chan *poll.Poll, err error
 
 // GetNewestPolls return at most 'count' number of polls, sorted by create time
 func (pb *PollDB) GetNewestPolls(count int64) (ch chan *poll.Poll, err error) {
+	ch, err = pb.GetPolls(count, "createTime", -1)
+	if err != nil {
+		pb.logger.Error(err.Error())
+	}
+	return
+}
+
+// GetMostViewedPolls return at most "count" number of polls, sorted by views
+func (pb *PollDB) GetMostViewedPolls(count int64) (ch chan *poll.Poll, err error) {
+	ch, err = pb.GetPolls(count, "numViewed", -1)
+	if err != nil {
+		pb.logger.Error(err.Error())
+	}
+	return
+}
+
+// GetMostStarPolls return at most "count" number of polls, sorted by number of stars
+func (pb *PollDB) GetMostStarPolls(count int64) (ch chan *poll.Poll, err error) {
+	ch, err = pb.GetPolls(count, "numStarred", -1)
+	if err != nil {
+		pb.logger.Error(err.Error())
+	}
+	return
+}
+
+// GetPolls return at most "count" number of polls, sorted by the field "sortBy" in indx order
+func (pb *PollDB) GetPolls(count int64, sortBy string, indx int) (ch chan *poll.Poll, err error) {
 	ctx := context.Background()
 	findOption := options.Find()
 	findOption.SetSort(bson.M{
-		"createTime": -1,
+		sortBy: indx,
 	})
 	findOption.SetLimit(count)
 	cur, err := pb.publicCollection.Find(ctx, bson.M{}, findOption)
@@ -154,7 +181,7 @@ func (pb *PollDB) AddPollStar(pollID string) (err error) {
 		"_id": pollID,
 	}, bson.M{
 		"$inc": bson.M{
-			"stars": 1,
+			"numStarred": 1,
 		},
 	})
 	return
@@ -164,7 +191,7 @@ func (pb *PollDB) AddPollStar(pollID string) (err error) {
 func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 	ctx := context.Background()
 	if err != nil {
-		return err
+		return
 	}
 	m := make(map[string]uint64)
 	// Construct an update map for votes
@@ -178,12 +205,15 @@ func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 	m["numVoted"] = 1
 	_, err = pb.publicCollection.UpdateOne(
 		ctx,
-		bson.M{"_id": pid},
-		bson.M{"$inc": m})
+		bson.M{
+			"_id": pid,
+		}, bson.M{
+			"$inc": m,
+		})
 	if err != nil {
 		pb.logger.Errorf("%s", err)
 	}
-	return err
+	return
 }
 
 // AddPollViewCount add one view count to the specific poll

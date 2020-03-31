@@ -1,9 +1,12 @@
 package db
 
 import (
+	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/miska12345/DDPoll/polluser"
@@ -38,7 +41,7 @@ func (ub *UserDB) GenerateUID(args ...string) string {
 
 func (ub *UserDB) genRandomBytes(size int) (salt []byte) {
 	salt = make([]byte, size)
-	//TODO: generate random bytes and put into the array
+	rand.Read(salt)
 	return salt
 }
 
@@ -63,17 +66,14 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	//look for any document that applys
 	filter := bson.M{"name": username}
 
-	c := make(map[uint32][]string)
-	c[123] = []string{"abc", "def"}
-	c[321] = []string{"abc", "def"}
 	//if there is none, insert one in the following format
 	replace := bson.M{
 		"$setOnInsert": bson.M{
 			"_id":       uid,
-			"Name":      username,
-			"Pass":      passhashed,
+			"name":      username,
+			"pass":      passhashed,
 			"salt":      salt,
-			"pollGroup": c,
+			"pollGroup": bson.D{},
 		},
 	}
 
@@ -117,35 +117,66 @@ func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
-	_, err = ub.publicCollection.UpdateOne(ctx, bson.M{
-		"name": username,
-	}, bson.M{
-		"$push": bson.M{"pollGroup": bson.M{pid: groupID}},
-	})
+	strgroupID := strconv.Itoa(int(groupID))
+	//logger.Debug(strgroupID)
+	filter := bson.M{"name": username}
+
+	update := bson.M{
+		"$push": bson.M{
+			"pollGroup." + strgroupID: pid,
+		},
+	}
+
+	_, err = ub.publicCollection.UpdateOne(ctx, filter, update)
 	return
 }
 
+//GetUserPollsByGroup will return the list of poll ids in the given group
 func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []string, err error) {
-	// ctx, cancel := ub.db.QueryContext()
-	// defer cancel()
+	ctx, cancel := ub.db.QueryContext()
+	defer cancel()
 
-	// var resb struct {
-	// 	PollGroup []string
-	// }
-	// opts := options.FindOne()
-	// opts.SetProjection(bson.M{
-	// 	"pollGroup.pollID": 1,
-	// })
+	var document = bson.M{}
+	var ids []string = make([]string, 0)
 
-	// ub.publicCollection.FindOne(ctx, bson.M{
-	// 	"name": username,
-	// 	"pollGroup": bson.M{
-	// 		"$elemMatch": bson.M{
-	// 			"groupID": groupID,
-	// 		},
-	// 	},
-	// }, opts).Decode()
-	return
+	filter := bson.M{
+		"name": username,
+	}
+
+	projection := bson.M{
+		"_id":  0,
+		"name": 0,
+		"pass": 0,
+		"salt": 0,
+	}
+
+	var doc = ub.publicCollection.FindOne(ctx, filter, options.FindOne().SetProjection(projection))
+
+	if err := doc.Decode(document); err != nil {
+		return nil, err
+	}
+
+	retrievedGrpsRaw := document["pollGroup"]
+
+	// this is a map, key as group ID, associating with a list of Polls under that group
+	retrievedGrps := reflect.ValueOf(retrievedGrpsRaw)
+
+	for _, key := range retrievedGrps.MapKeys() {
+		//find the group we are looking for
+		if key.String() == strconv.Itoa(int(groupID)) {
+			//retrievedGrps.MapIndex(key).Interface() returns an interface that the key
+			//points to. And underneath this interface is an array of string
+			retrievedIds := reflect.ValueOf(retrievedGrps.MapIndex(key).Interface())
+
+			for i := 0; i < retrievedIds.Len(); i++ {
+				//Knowing it is an array under, we can just index it to get elem at that index
+				ids = append(ids, retrievedIds.Index(i).Interface().(string))
+
+			}
+		}
+	}
+
+	return ids, nil
 }
 
 //GetUserByName will return the user with the name specifield

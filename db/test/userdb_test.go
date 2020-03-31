@@ -1,8 +1,10 @@
 package dbtest
 
 import (
+	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -44,9 +46,32 @@ func TestUpdateUserPoll(t *testing.T) {
 	userDB := db.ToUserDB(Database, collectionname, "")
 	_, err = userDB.CreateNewUser("didntpay", "password")
 	assert.Nil(t, err)
-	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "a", 1))
-	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "b", 1))
-	res, err := userDB.GetUserPollsByGroup("didntpay", 1)
-	assert.Nil(t, err)
-	assert.Equal(t, []string{"a"}, res)
+
+	asserted := make(map[uint32][]string)
+	for i := 0; i < 500; i++ {
+		// x := rand.Intn(3) + 1
+		// switch x {
+		// case 1:
+		pid := userDB.GenerateUID("didntpay", time.Now().String())
+		groupID := uint32(rand.Int())
+		assert.Nil(t, userDB.UpdateUserPolls("didntpay", pid, groupID))
+		asserted[groupID] = append(asserted[groupID], pid)
+		// case 2:
+
+		// }
+	}
+
+	for key, val := range asserted {
+		ids, err := userDB.GetUserPollsByGroup("didntpay", key)
+		assert.Nil(t, err)
+
+		for i := range ids {
+			assert.Equal(t, ids[i], val[i])
+		}
+
+	}
 }
+
+// func TestConcurrentUserPoll (t *testing.T) {
+
+// }

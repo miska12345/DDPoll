@@ -71,6 +71,64 @@ func TestPollsDBNewstPolls(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestPollsDBMostViewedPolls(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+
+	ids := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+		assert.Nil(t, err)
+		for j := 0; j < i; j++ {
+			assert.Nil(t, pollsDB.AddPollViewCount(id))
+		}
+		ids[i] = id
+	}
+	ch, err := pollsDB.GetMostViewedPolls(5)
+	assert.Nil(t, err)
+	for i := 9; i >= 5; i-- {
+		val, ok := <-ch
+		assert.True(t, ok)
+		assert.Equal(t, val.PID, ids[i])
+		assert.Equal(t, strconv.Itoa(i), val.Title)
+		assert.Equal(t, "miska", val.Owner)
+	}
+
+	_, ok := <-ch
+	assert.False(t, ok)
+}
+
+func TestPollsDBMostStars(t *testing.T) {
+	db, err := initializeTestEnv(collectionName)
+	defer db.Disconnect()
+	assert.Nil(t, err)
+	pollsDB := db.ToPollsDB(Database, collectionName, "")
+
+	ids := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		id, err := pollsDB.CreatePoll("miska", strconv.Itoa(i), "vote for dinner", "Life Style", true, time.Hour, []string{"Chicken", "Rice"})
+		assert.Nil(t, err)
+		for j := 0; j < i; j++ {
+			assert.Nil(t, pollsDB.AddPollStar(id))
+		}
+		ids[i] = id
+	}
+	ch, err := pollsDB.GetMostStarPolls(5)
+	assert.Nil(t, err)
+	for i := 9; i >= 5; i-- {
+		val, ok := <-ch
+		assert.True(t, ok)
+		assert.Equal(t, val.PID, ids[i])
+		assert.Equal(t, strconv.Itoa(i), val.Title)
+		assert.Equal(t, "miska", val.Owner)
+	}
+
+	_, ok := <-ch
+	assert.False(t, ok)
+}
+
 func TestFindPollsUser(t *testing.T) {
 	db, err := initializeTestEnv(collectionName)
 	defer db.Disconnect()
