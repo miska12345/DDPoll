@@ -137,3 +137,41 @@ func TestStreamPollsMultiple(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestVoteMultiple(t *testing.T) {
+	s, con, err := initializeTestEnv()
+	assert.Nil(t, err)
+	defer con.Close()
+	defer s.Stop()
+
+	c := pb.NewDDPollClient(con)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	sum, err := c.DoAction(ctx, &pb.UserAction{
+		Action:     pb.UserAction_Authenticate,
+		Parameters: []string{admin, adPass},
+	})
+	assert.Nil(t, err)
+
+	token := sum.GetToken()
+
+	sum2, err := c.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: admin,
+			Token:    token,
+		},
+		Action:     pb.UserAction_Create,
+		Parameters: []string{"title", "context", "cat", "true", "A", "B"},
+	})
+	assert.Nil(t, err)
+	id := string(sum2.Info)
+	_, err = c.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: admin,
+			Token:    token,
+		},
+		Action:     pb.UserAction_VoteMultiple,
+		Parameters: []string{id, "1", "0"},
+	})
+	assert.Nil(t, err)
+}

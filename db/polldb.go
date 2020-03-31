@@ -164,7 +164,7 @@ func (pb *PollDB) AddPollStar(pollID string) (err error) {
 func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 	ctx := context.Background()
 	if err != nil {
-		return err
+		return
 	}
 	m := make(map[string]uint64)
 	// Construct an update map for votes
@@ -178,12 +178,15 @@ func (pb *PollDB) UpdateNumVoted(pid string, votes []uint64) (err error) {
 	m["numVoted"] = 1
 	_, err = pb.publicCollection.UpdateOne(
 		ctx,
-		bson.M{"_id": pid},
-		bson.M{"$inc": m})
+		bson.M{
+			"_id": pid,
+		}, bson.M{
+			"$inc": m,
+		})
 	if err != nil {
 		pb.logger.Errorf("%s", err)
 	}
-	return err
+	return
 }
 
 // AddPollViewCount add one view count to the specific poll

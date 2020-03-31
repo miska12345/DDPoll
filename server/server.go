@@ -304,7 +304,7 @@ func (s *server) doCreatePoll(ctx context.Context, params []string) (as *pb.Acti
 
 func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
 	if len(params) < VOTE_MUL_PARAM_NUM {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
+		return &pb.ActionSummary{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", 2, len(params)))
 	}
 
 	pid := params[uParamsPollID]
@@ -318,7 +318,7 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 		}
 	}
 	err = s.pollsDB.UpdateNumVoted(pid, votes)
-	return nil, err
+	return &pb.ActionSummary{}, err
 }
 
 /*********************************************************************************************************************************************************/
