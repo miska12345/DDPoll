@@ -55,14 +55,11 @@ func (ub *UserDB) CreateNewUser(username, password string) (string, error) {
 	var collection *mongo.Collection = ub.publicCollection
 	var uid string = ub.GenerateUID(username, time.Now().String())
 	var passhashed []byte
-	//var pollgroup map[uint32][]string = make(map[uint32][]string)
+
 	h.Write([]byte(password))
 	h.Write(salt)
 	passhashed = h.Sum(nil)
 
-	// temp := make([]string, 2, 3)
-	// temp[0] = "abc"
-	// pollgroup[123] = temp
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
@@ -134,18 +131,13 @@ func (ub *UserDB) UpdateUserPolls(username string, pid string, groupID uint32) (
 	return
 }
 
-type Decode struct {
-	pollGroup string
-	keys      map[string][]int
-}
-
 //GetUserPollsByGroup will return the list of poll ids in the given group
 func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []string, err error) {
 	ctx, cancel := ub.db.QueryContext()
 	defer cancel()
 
 	var document = bson.M{}
-	var ids []string = make([]string, 2)
+	var ids []string = make([]string, 0)
 
 	filter := bson.M{
 		"name": username,
@@ -164,30 +156,25 @@ func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []st
 		return nil, err
 	}
 
-	retrievedGrps := document["pollGroup"]
+	retrievedGrpsRaw := document["pollGroup"]
 
-	// this is a map, return by bson.M['pollGroups']
-	s := reflect.ValueOf(retrievedGrps)
+	// this is a map, key as group ID, associating with a list of Polls under that group
+	retrievedGrps := reflect.ValueOf(retrievedGrpsRaw)
 
-	for _, key := range s.MapKeys() {
+	for _, key := range retrievedGrps.MapKeys() {
+		//find the group we are looking for
 		if key.String() == strconv.Itoa(int(groupID)) {
-			retrievedface := reflect.ValueOf(s.MapIndex(key).Interface())
-			fmt.Println(retrievedface.Kind())
-			for i := 0; i < retrievedface.Len(); i++ {
-				ids[i] = retrievedface.Index(i).Interface().(string)
+			//retrievedGrps.MapIndex(key).Interface() returns an interface that the key
+			//points to. And underneath this interface is an array of string
+			retrievedIds := reflect.ValueOf(retrievedGrps.MapIndex(key).Interface())
+
+			for i := 0; i < retrievedIds.Len(); i++ {
+				//Knowing it is an array under, we can just index it to get elem at that index
+				ids = append(ids, retrievedIds.Index(i).Interface().(string))
 
 			}
 		}
 	}
-
-	// for i := 0; i < s.Len(); i++ {
-	// 	ids[i] = s.Index(i).Interface().(string)
-	// }
-
-	// for _, id := range retrievedIDs {
-	// 	ids = append(ids, id.s)
-	// 	logger.Debug(id.(string))
-	// }
 
 	return ids, nil
 }
