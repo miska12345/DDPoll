@@ -166,17 +166,14 @@ func (ub *UserDB) GetUserPollsByGroup(username string, groupID uint32) (res []st
 
 	retrievedGrps := document["pollGroup"]
 
-	// //this is a map, return by bson.M['pollGroups']
+	// this is a map, return by bson.M['pollGroups']
 	s := reflect.ValueOf(retrievedGrps)
 
 	for _, key := range s.MapKeys() {
 		if key.String() == strconv.Itoa(int(groupID)) {
 			retrievedface := reflect.ValueOf(s.MapIndex(key).Interface())
-			//logger.Debug(strconv.Itoa(retrievedface.NumField()))
 			fmt.Println(retrievedface.Kind())
-			//logger.Debug(retrievedelem.Interface().(string))
 			for i := 0; i < retrievedface.Len(); i++ {
-				//ids[i] = retrievedface.Interface().(string)
 				ids[i] = retrievedface.Index(i).Interface().(string)
 
 			}

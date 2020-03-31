@@ -45,6 +45,7 @@ func TestUpdateUserPoll(t *testing.T) {
 	userDB := db.ToUserDB(Database, collectionname, "")
 	_, err = userDB.CreateNewUser("didntpay", "password")
 	assert.Nil(t, err)
+<<<<<<< HEAD
 	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "ASDSAAAA", 100))
 	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "DSAAAA", 100))
 	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "DSAAAA", 101))
@@ -55,4 +56,11 @@ func TestUpdateUserPoll(t *testing.T) {
 	//res, err := userDB.GetUserPollsByGroup("didntpay", 1)
 	//assert.Nil(t, err)
 	//assert.Equal(t, []string{"a"}, res)
+=======
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "a", 1))
+	assert.Nil(t, userDB.UpdateUserPolls("didntpay", "b", 1))
+	res, err := userDB.GetUserPollsByGroup("didntpay", 1)
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"a"}, res)
+>>>>>>> ea7a5cc6623a3cd66fb4b3bbdd41ec9613db6163
 }

@@ -6,10 +6,23 @@ service DDPoll {
     rpc FindPollByKeyWord(SearchQuery) returns (SearchResp) {}
     rpc DoAction(UserAction) returns (ActionSummary) {}
     rpc JoinPollGroup(JoinPollQuery) returns (stream Poll) {}
+    rpc EstablishClientStream(PollStreamConfig) returns (stream Next) {}
+}
+
+message Next {
+    enum PollControl {
+        foward = 0;
+        backward = 1;
+        start = 3;
+        stop = 4;
+        terminateGroup = 5;
+    }
+    PollControl signal = 1;
 }
 
 message JoinPollQuery {
     string phrase = 1;
+    string displayName = 2;
 }
 
 message PollStreamConfig {
