@@ -17,3 +17,4 @@ func main() {
 	fmt.Println("xxhash.Backend:", xxhash.Backend)
 	fmt.Println("File checksum:", h.Sum64())
 }
+//testing
