@@ -49,8 +49,7 @@ type pollgroup struct {
 	canVote     bool
 	gids        []uint32
 	currentPoll *pb.Poll
-	waiter      *sync.Cond
-	*sync.Mutex
+	sync.Mutex
 }
 
 // Run starts running the server
@@ -99,7 +98,7 @@ func newServer(maxConnection int, pdb *db.PollDB, udb *db.UserDB) *server {
 	s.usersDB = udb
 	s.maxConnection = maxConnection
 	s.authSalt = make([]byte, 128)
-
+	s.pollgroups.rooms = make(map[string]*pollgroup)
 	rand.Read(s.authSalt)
 	return s
 }
@@ -194,12 +193,12 @@ func (s *server) verifyAuthToken(token uint64, username string) bool {
 // DoAction takes UserAction request and distribute into sub-routines for processing
 func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.ActionSummary, err error) {
 	as = &pb.ActionSummary{}
-	if action.GetAction() != pb.UserAction_Authenticate {
-		if !s.verifyAuthToken(action.GetHeader().GetToken(), action.GetHeader().GetUsername()) {
-			err = status.Error(codes.Unauthenticated, "Token is invalid")
-			return
-		}
-	}
+	// if action.GetAction() != pb.UserAction_Authenticate {
+	// 	if !s.verifyAuthToken(action.GetHeader().GetToken(), action.GetHeader().GetUsername()) {
+	// 		err = status.Error(codes.Unauthenticated, "Token is invalid")
+	// 		return
+	// 	}
+	// }
 	switch action.GetAction() {
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
@@ -344,15 +343,16 @@ func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.Acti
 	return nil, nil
 }
 
-func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+func (s *server) doStartPollGroup(ctx context.Context, params []string) (*pb.ActionSummary, error) {
 	if len(params) < START_PG_PARAM_NUM {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", START_PG_PARAM_NUM, len(params)))
+		logger.Error("Invalid Argument Error")
+		return &pb.ActionSummary{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", START_PG_PARAM_NUM, len(params)))
 	}
 	// Randomized random generated integer
 	random.Seed(time.Now().UnixNano())
 	var roomKey string
 	pg := new(pollgroup)
-	sync.NewCond(pg.waiter.L)
+	s.pollgroups.Lock()
 	for {
 		// Generate random string
 		var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -360,14 +360,16 @@ func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.
 		for i := range b {
 			b[i] = letterRunes[random.Intn(len(letterRunes))]
 		}
-		roomKey := string(b)
-		// Assign roomKey to
+		roomKey = string(b)
+
+		// Assign roomKey to pollroom
 		if _, ok := s.pollgroups.rooms[roomKey]; !ok {
 			s.pollgroups.rooms[roomKey] = pg
 			break
 		}
 	}
-	pg.Lock()
+	s.pollgroups.Unlock()
+	// TODO: Add lock
 	// Initilize poll room
 	pg.creator = params[0]
 	strGids := params[1:]
@@ -375,9 +377,10 @@ func (s *server) doStartPollGroup(ctx context.Context, params []string) (as *pb.
 		gid, _ := strconv.ParseInt(val, 10, 64)
 		pg.gids = append(pg.gids, uint32(gid))
 	}
-	pg.Unlock()
-	as.Info = []byte(roomKey)
-	return as, error(nil)
+
+	return &pb.ActionSummary{
+		Info: []byte(roomKey),
+	}, error(nil)
 }
 
 func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer) error {
@@ -385,7 +388,6 @@ func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer
 	roomKey := nextCommand.GetRoomKey()
 	pg := s.pollgroups.rooms[roomKey]
 	uid := pg.creator
-	sync.NewCond(pg.waiter.L)
 	var pids []string
 	for _, gid := range pg.gids {
 		tempPIDs, err := s.usersDB.GetUserPollsByGroup(uid, gid)

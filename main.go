@@ -28,8 +28,7 @@ func establishStream(client pb.DDPollClient) {
 }
 
 func authenticate(client pb.DDPollClient, username, password string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	as, err := client.DoAction(ctx, &pb.UserAction{
 		Action:     pb.UserAction_Authenticate,
 		Parameters: []string{username, password},
@@ -41,6 +40,34 @@ func authenticate(client pb.DDPollClient, username, password string) {
 	authToken = as.GetToken()
 	fmt.Println(authToken)
 	fmt.Println("login ok")
+}
+
+// Takes a group of group ids, and username to create poll room
+// Returns a passphrase to join poll room and error idicator
+func createPollRoom(client pb.DDPollClient, username string, gids []string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	as, err := client.DoAction(ctx, &pb.UserAction{
+		Header: &pb.UserAction_Header{
+			Username: "didntpay",
+			Token:    authToken,
+		},
+		Action:     pb.UserAction_StartGroupPoll,
+		Parameters: append([]string{username}, gids...),
+	})
+	return string(as.GetInfo()), err
+}
+
+func sendCommand(client pb.DDPollClient, roomKey string, command pb.Next_PollControl) error {
+	sc, err := client.EstablishClientStream(context.Background())
+	if err != nil {
+		return err
+	}
+	err = sc.Send(&pb.Next{
+		RoomKey: roomKey,
+		Signal:  command,
+	})
+	return err
 }
 
 func createPoll(client pb.DDPollClient) {
@@ -132,8 +159,14 @@ func main() {
 	defer conn.Close()
 	client := pb.NewDDPollClient(conn)
 
-	authenticate(client, "admin", "666")
+	// authenticate(client, "admin", "666")
+	// authenticate(client, "didntpay", "password")
 	//createPoll(client)
 	//createUser(client)
+	roomKey, err := createPollRoom(client, "didntpay", []string{"22003698", "17129137"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(roomKey)
 	testAuth(client, 100)
 }
