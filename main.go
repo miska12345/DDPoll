@@ -11,6 +11,59 @@ import (
 
 var authToken uint64
 
+func vote(client pb.DDPollClient, pid string, votes []string) error {
+	_, err := client.DoAction(context.Background(), &pb.UserAction{
+		Action:     pb.UserAction_VoteMultiple,
+		Parameters: append([]string{pid}, votes...),
+	})
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return error(nil)
+}
+
+// client side rpc for joining a poll group
+//
+func joinPollGroup(client pb.DDPollClient, passphrase, displayname string) error {
+	stream, err := client.JoinPollGroup(context.Background(),
+		&pb.JoinPollQuery{
+			Phrase:      passphrase,
+			DisplayName: displayname,
+		})
+	if err != nil {
+		return err
+	}
+	for {
+		stream.CloseSend()
+		poll, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(poll)
+	}
+}
+
+// Test for client stream that sends two forward command, first one is for initialization
+// and doesn't perform usage of a command
+// TODO: Add a channel receiver of command
+func establishClientStream(client pb.DDPollClient, passphrase string) error {
+	stream, err := client.EstablishClientStream(context.Background())
+	err = stream.Send(&pb.Next{
+		Signal:  pb.Next_foward,
+		RoomKey: passphrase,
+	})
+	err = stream.Send(&pb.Next{
+		Signal:  pb.Next_foward,
+		RoomKey: passphrase,
+	})
+	if err != nil {
+		return err
+	}
+	return error(nil)
+}
+
 func establishStream(client pb.DDPollClient) {
 	ctx := context.Background()
 	config := new(pb.PollStreamConfig)
@@ -45,8 +98,7 @@ func authenticate(client pb.DDPollClient, username, password string) {
 // Takes a group of group ids, and username to create poll room
 // Returns a passphrase to join poll room and error idicator
 func createPollRoom(client pb.DDPollClient, username string, gids []string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	as, err := client.DoAction(ctx, &pb.UserAction{
 		Header: &pb.UserAction_Header{
 			Username: "didntpay",
@@ -167,6 +219,17 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	err = establishClientStream(client, roomKey)
+	if err != nil {
+		fmt.Println(err)
+	}
+	time.Sleep(time.Second * 5)
+	go joinPollGroup(client, roomKey, "WORLD")
+	go joinPollGroup(client, roomKey, "HELLO")
+	go joinPollGroup(client, roomKey, "TONY")
+	for {
+	}
+
 	fmt.Println(roomKey)
-	testAuth(client, 100)
+	// testAuth(client, 100)
 }

@@ -10,6 +10,7 @@ import (
 	"io"
 	random "math/rand"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -44,7 +45,7 @@ type pollRooms struct {
 
 type pollgroup struct {
 	creator     string
-	members     []string
+	members     map[string]bool
 	numEnrolled uint32
 	canVote     bool
 	gids        []uint32
@@ -74,8 +75,8 @@ func Run(port string, maxConnection int, pollsDBURL, pollsBase string, userDBURL
 		return
 	}
 
-	pollsDB, perr := connectToPollsDB(pollsDBURL, pollsBase, "Polls")
-	usersDB, uerr := connectToUsersDB(userDBURL, usersBase, "Users")
+	pollsDB, perr := connectToPollsDB(pollsDBURL, pollsBase, "poll")
+	usersDB, uerr := connectToUsersDB(userDBURL, usersBase, "users")
 	if perr != nil || uerr != nil {
 		logger.Error("Failed to initialize database connections")
 		return
@@ -199,6 +200,7 @@ func (s *server) DoAction(ctx context.Context, action *pb.UserAction) (as *pb.Ac
 	// 		return
 	// 	}
 	// }
+	logger.Debugf("%s", action.GetAction())
 	switch action.GetAction() {
 	case pb.UserAction_Authenticate:
 		as, err = s.doAuthenticate(ctx, action.GetParameters())
@@ -324,25 +326,6 @@ func (s *server) doVoteMultiple(ctx context.Context, params []string) (as *pb.Ac
 
 /*********************************************************************************************************************************************************/
 
-func (s *server) doGroupPolls(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	// as = &pb.ActionSummary{}
-	// for _, v := range params {
-	// 	p, err := s.pollsDB.GetPollByPID(v)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 		return
-	// 	}
-	// 	if p.Owner != params[uParamsUsername] {
-	// 		return &pb.ActionSummary{}, status.Error(codes.NotFound, fmt.Sprintf("poll ID %d does not own %s", params[uParamsUsername]))
-	// 	}
-	// 	err = s.usersDB.UpdateUserPolls(v)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// }
-	return nil, nil
-}
-
 func (s *server) doStartPollGroup(ctx context.Context, params []string) (*pb.ActionSummary, error) {
 	if len(params) < START_PG_PARAM_NUM {
 		logger.Error("Invalid Argument Error")
@@ -383,15 +366,29 @@ func (s *server) doStartPollGroup(ctx context.Context, params []string) (*pb.Act
 	}, error(nil)
 }
 
+func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
+	if len(params) < 1 {
+		logger.Error("Invalid Argument Error")
+		return &pb.ActionSummary{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Expect %d but receive %d parameters for registration", START_PG_PARAM_NUM, len(params)))
+	}
+	s.pollgroups.Lock()
+	delete(s.pollgroups.rooms, params[0])
+	return &pb.ActionSummary{}, error(nil)
+}
+
+// first "empty" command from host is needed for initializing the poll room
 func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer) error {
 	nextCommand, err := srv.Recv()
 	roomKey := nextCommand.GetRoomKey()
 	pg := s.pollgroups.rooms[roomKey]
+	pg.members = make(map[string]bool)
 	uid := pg.creator
 	var pids []string
 	for _, gid := range pg.gids {
 		tempPIDs, err := s.usersDB.GetUserPollsByGroup(uid, gid)
-		logger.Errorf("%s", err)
+		if err != nil {
+			logger.Errorf("%s, uid: %s, gid: %s", err, uid, string(gid))
+		}
 		pids = append(pids, tempPIDs...)
 	}
 	if len(pids) == 0 {
@@ -418,10 +415,14 @@ func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer
 
 	// Get DB poll
 	nextPoll, err := s.pollsDB.GetPollByPID(pids[idx])
+	if err != nil {
+		logger.Infof("%s, pid: %s", err, pids[idx])
+	}
 
 	// Convert DB poll to RPC poll
+	pg.currentPoll = new(pb.Poll)
 	DB2RPC(nextPoll, pg.currentPoll)
-
+	logger.Infof("current pid: %s", pg.currentPoll)
 	for {
 		nextCommand, err := srv.Recv()
 		if err == io.EOF {
@@ -472,10 +473,45 @@ func (s *server) EstablishClientStream(srv pb.DDPoll_EstablishClientStreamServer
 		case pb.Next_terminateGroup:
 			return srv.SendAndClose(&pb.ActionSummary{})
 		}
+		logger.Infof("current pid: %s", pg.currentPoll)
 	}
 	return err
 }
 
-func (s *server) doStopPollGroup(ctx context.Context, params []string) (as *pb.ActionSummary, err error) {
-	panic("not implemented")
+// RPC serivce for a client joining a poll group
+func (s *server) JoinPollGroup(req *pb.JoinPollQuery, stream pb.DDPoll_JoinPollGroupServer) error {
+	roomKey := req.GetPhrase()
+	logger.Infof("%s has joined the room", req.GetDisplayName())
+	// Initialize first poll
+	pollroom := s.pollgroups.rooms[roomKey]
+	pollroom.Lock()
+	clientP := pollroom.currentPoll
+	if clientP == nil {
+		logger.Error("Poll is empty")
+	}
+
+	if _, ok := pollroom.members[req.DisplayName]; ok {
+		logger.Infof("DisplayName Occupied")
+		return os.ErrClosed
+	}
+	pollroom.members[req.DisplayName] = false
+	logger.Infof("Participants count: %d", len(pollroom.members))
+	logger.Infof("Current poll %s", pollroom.currentPoll)
+
+	for {
+		// Checking for poll update every 500 miliseconds
+		time.Sleep(500 * time.Millisecond)
+		pollroom.Lock()
+		clientP = pollroom.currentPoll
+
+		if errSend := stream.Send(clientP); errSend != nil {
+			logger.Errorf("[SendPolls] %s", errSend)
+			delete(pollroom.members, req.GetDisplayName())
+			logger.Infof("Participants count: %d", len(pollroom.members))
+			pollroom.Unlock()
+			return errSend
+		}
+
+		pollroom.Unlock()
+	}
 }

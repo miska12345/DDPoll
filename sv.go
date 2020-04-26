@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	g, _ := server.Run("8080", 100, "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority", "Polls", "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority", "Users")
+	g, _ := server.Run("8080", 100, "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority", "testDB", "mongodb+srv://ddpoll:ddpoll@test-ycw1l.mongodb.net/test?retryWrites=true&w=majority", "testDB")
 	for {
 		var stop string
 		fmt.Scanf("%s", &stop)
